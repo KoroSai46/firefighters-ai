@@ -17,7 +17,12 @@ module.exports = {
          */
 
         for (let i = 0; i < 100; i++) {
-            await factory.createFireStation(faker.company.name(), faker.location.latitude(), faker.location.longitude());
+            await factory.createFireStation(
+                faker.company.name(),
+                faker.location.streetAddress(true),
+                faker.location.latitude(),
+                faker.location.longitude()
+            );
         }
     },
 

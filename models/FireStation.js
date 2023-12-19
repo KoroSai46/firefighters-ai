@@ -15,6 +15,10 @@ class FireStation extends Model {
         return this.name;
     }
 
+    getAddress() {
+        return this.address;
+    }
+
     getLatitude() {
         return this.latitude;
     }
@@ -33,22 +37,32 @@ class FireStation extends Model {
 
     setName(name) {
         this.name = name;
+        return this;
+    }
+
+    setAddress(address) {
+        this.address = address;
+        return this;
     }
 
     setLatitude(latitude) {
         this.latitude = latitude;
+        return this;
     }
 
     setLongitude(longitude) {
         this.longitude = longitude;
+        return this;
     }
 
     setCreatedAt(createdAt) {
         this.createdAt = createdAt;
+        return this;
     }
 
     setUpdatedAt(updatedAt) {
         this.updatedAt = updatedAt;
+        return this;
     }
 
 }
@@ -63,6 +77,10 @@ FireStation.init({
         type: DataTypes.STRING,
         allowNull: false
     },
+    address: {
+        type: DataTypes.STRING,
+        allowNull: false
+    },
     latitude: {
         type: DataTypes.FLOAT,
         allowNull: false
@@ -73,13 +91,12 @@ FireStation.init({
     }
 }, {
     sequelize,
-    dialect: 'mysql'
+    dialect: 'mysql',
+    tableName: FireStation.getTableName(),
 });
 
-FireStation.sync().then(r =>
-    console.log('FireStation table created')
-).catch(e => {
-    console.log(e);
+FireStation.sync().then().catch(error => {
+    console.log(error);
 });
 
 module.exports = FireStation;
