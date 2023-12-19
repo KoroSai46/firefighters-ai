@@ -25,6 +25,8 @@ mysql.createConnection({
             console.log('Operation finished.');
         });
 
+}).catch((error) => {
+    console.log(error);
 });
 
 //exiting the process
