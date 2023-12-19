@@ -3,12 +3,12 @@ const app = express();
 const port = 3000;
 require('dotenv').config();
 
-const factory = require('./factorys/factorys');
-const models = require('./models/models');
+const repository = require('./repository/repository');
+const wrapper = require('./http/wrapper');
 
 app.get('/', async (req, res) => {
-    const fireStations = await models.FireStation.findAll();
-    res.send(fireStations);
+    const fireStations = await repository.FireStationRepository.findAll(req);
+    res.send(wrapper.success(fireStations));
 });
 
 app.listen(port, () => {
