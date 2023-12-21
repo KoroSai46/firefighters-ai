@@ -1,42 +1,38 @@
-const {Sequelize, DataTypes, Model} = require('sequelize');
-const sequelize = require('../database');
+const {DataTypes, Model} = require('sequelize');
+const sequelize = require('../../database');
 
-class Bot extends Model {
+class FireFighter extends Model {
     //set table name
     static getTableName() {
-        return 'bot';
+        return 'firefighters';
     }
 
 }
 
-Bot.init({
+FireFighter.init({
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
         allowNull: false,
     },
-    uuid: {
-        type: DataTypes.UUID,
-        allowNull: false,
-    },
-    speed: {
+    maxWaterCapacity: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    maxAutonomy: {
+    waterCapacity: {
         type: DataTypes.INTEGER,
         allowNull: false,
     },
-    currentAutonomy: {
+    extinguishingStrength: {
         type: DataTypes.INTEGER,
         allowNull: false,
-    },
+    }
 }, {
     sequelize,
     dialect: 'mysql',
-    tableName: Bot.getTableName(),
+    tableName: FireFighter.getTableName(),
     timestamps: true,
 });
 
-module.exports = Bot;
+module.exports = FireFighter;
