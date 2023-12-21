@@ -1,20 +1,12 @@
 //FireStation factory
 const {FireStation} = require('../models/models');
 const sequelize = require('../database');
+const BaseFactory = require('./BaseFactory');
 
-async function createFireStation(name, address, latitude, longitude) {
-    try {
-        return await FireStation.create({
-            name,
-            address,
-            latitude,
-            longitude,
-        });
-    } catch (error) {
-        console.error('Error creating record:', error);
+class FireStationFactory extends BaseFactory {
+    constructor() {
+        super(FireStation);
     }
 }
 
-module.exports = {
-    createFireStation
-}
+module.exports = new FireStationFactory();

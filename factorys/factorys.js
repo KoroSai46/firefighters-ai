@@ -1,5 +1,7 @@
-const {createFireStation} = require('./FireStation');
+const FireStationFactory = require('./FireStation');
+const BotFactory = require('./Bot');
 
 module.exports = {
-    createFireStation
+    FireStationFactory,
+    BotFactory,
 }

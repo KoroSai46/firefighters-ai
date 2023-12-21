@@ -1,7 +1,7 @@
 'use strict';
-const {FireStation} = require('../models/models');
-const {FireStationFactory} = require('../factorys/factorys');
+const {BotFactory} = require('../factorys/factorys');
 const {faker} = require('@faker-js/faker');
+const {v4: uuidv4} = require('uuid');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
@@ -15,14 +15,13 @@ module.exports = {
          *   isBetaMember: false
          * }], {});
          */
-
-        for (let i = 0; i < 100; i++) {
-            console.log('Creating fire station', i);
-            await FireStationFactory.create({
-                name: faker.company.name(),
-                address: faker.location.streetAddress(true),
-                latitude: faker.location.latitude(),
-                longitude: faker.location.longitude()
+        for (let i = 0; i < 10; i++) {
+            const maxAutonomy = faker.number.int({min: 20, max: 300});
+            await BotFactory.create({
+                uuid: uuidv4(),
+                speed: faker.number.int({min: 0, max: 100}),
+                maxAutonomy: maxAutonomy,
+                currentAutonomy: faker.number.int({min: 0, max: maxAutonomy}),
             });
         }
     },
@@ -34,9 +33,6 @@ module.exports = {
          * Example:
          * await queryInterface.bulkDelete('People', null, {});
          */
-        await FireStation.destroy({
-            where: {},
-            truncate: true
-        });
+        await queryInterface.bulkDelete('Bots', null, {});
     }
 };
