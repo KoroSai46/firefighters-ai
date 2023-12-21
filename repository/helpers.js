@@ -1,12 +1,36 @@
 const possibleQueryParams = [
-    's',
-    'page',
-    'limit',
-    'sort',
-    'order',
-    'date',
-    'dateStart',
-    'dateStart'
+    {
+        key: 's',
+        default: null
+    },
+    {
+        key: 'limit',
+        default: 10
+    },
+    {
+        key: 'page',
+        default: 1
+    },
+    {
+        key: 'sort',
+        default: 'ASC'
+    },
+    {
+        key: 'order',
+        default: 'id'
+    },
+    {
+        key: 'date',
+        default: null
+    },
+    {
+        key: 'dateStart',
+        default: null
+    },
+    {
+        key: 'dateEnd',
+        default: null
+    },
 ]
 
 const {Op} = require('sequelize');
@@ -49,6 +73,8 @@ async function findAllGeneric(model, req) {
         limit: limit || 10,
         offset: (page - 1) * limit || 0,
     };
+
+    console.log(queryOptions);
 
     // Ajouter l'ordre si spécifié
     if (order && sort) {
@@ -102,13 +128,13 @@ const generateQueries = (req, total, limit, page) => {
 }
 
 const getQueryParams = (req) => {
-    const queryParams = req.params;
+    const queryParams = req.query;
     const params = {};
-    for (const key in queryParams) {
-        if (possibleQueryParams.includes(key)) {
-            params[key] = queryParams[key];
-        }
-    }
+
+    possibleQueryParams.forEach(queryParam => {
+        params[queryParam.key] = queryParams[queryParam.key] || queryParam.default;
+    });
+
     return params;
 }
 
