@@ -1,4 +1,12 @@
 require('dotenv').config();
+const path = require('path');
+
+app.set('view engine', 'ejs');
+app.set('views', path.join(__dirname, 'views'));
+
+const routes = require('./routes');
+app.use('/', routes);
+app.use(express.static('public'));
 
 const express = require('express');
 const http = require('http');
