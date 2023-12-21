@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+    <title>Firefighters-ai</title>
+
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="map.ejs"></script>
+    <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
+    <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet'/>
+</head>
+
+<body class="firefighters-ai">
+<div id="map" style='width: 600px; height: 600px;'></div>
+<script>
+    mapboxgl.accessToken = 'pk.eyJ1IjoieWhhb3VydCIsImEiOiJjbHFjZXRnZXgwMWZxMnFwanh1MnNxMzF3In0.NcuusOQX2gN1qVCYs_304w';
+    const map = new mapboxgl.Map({
+        container: 'map',
+        style: 'mapbox://styles/mapbox/streets-v12',
+        center: [1.532917, 45.159722],
+        zoom: 10,
+    });
+
+    const firePolygon = {
+        type: 'Feature',
+        geometry: {
+            type: 'Polygon',
+            coordinates: [
+                [
+                    [1.53, 45.16],
+                    [1.54, 45.16],
+                    [1.54, 45.17],
+                    [1.53, 45.17],
+                    [1.53, 45.16],
+                ],
+            ],
+        },
+        properties: {
+            title: 'Incendie',
+            description: 'Zone touchée par l\'incendie',
+        },
+    };
+
+    map.on('load', function () {
+        map.addLayer({
+            id: 'fire-layer',
+            type: 'fill',
+            source: {
+                type: 'geojson',
+                data: {
+                    type: 'FeatureCollection',
+                    features: [firePolygon],
+                },
+            },
+            layout: {},
+            paint: {
+                'fill-color': 'red',
+                'fill-opacity': 0.5,
+            },
+        });
+    });
+</script>
+</body>
+</html>
