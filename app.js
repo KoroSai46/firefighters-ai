@@ -7,8 +7,8 @@ const repository = require('./repository/repository');
 const wrapper = require('./http/wrapper');
 
 app.get('/', async (req, res) => {
-    const fireStations = await repository.FireStationRepository.findAll(req);
-    res.send(wrapper.success(fireStations));
+    const bots = await repository.BotRepository.findAll(req);
+    res.send(wrapper.success(bots));
 });
 
 app.listen(port, () => {
