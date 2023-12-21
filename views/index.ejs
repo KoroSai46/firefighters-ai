@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport"
+          content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Document</title>
+</head>
+<body>
+    Un exemple
+</body>
+</html>
+
+
+
+<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
+
+<script type="text/javascript" defer>
+    const socket = io('http://localhost:3000');
+
+    socket.on('fire start', (data) => {
+        console.log('fire start', data);
+    });
+</script>

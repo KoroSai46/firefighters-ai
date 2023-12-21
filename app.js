@@ -1,16 +1,39 @@
-const express = require('express');
-const app = express();
-const port = 3000;
 require('dotenv').config();
+
+const express = require('express');
+const http = require('http');
+const { Server } = require("socket.io");
+const socket = require('./sockets/index');
+
+const app = express();
+const server = http.createServer(app);
+const port = 3000;
 
 const repository = require('./repository/repository');
 const wrapper = require('./http/wrapper');
 
+const { emitNewWildFire } = require('./sockets/wildFireSocket');
+
+//set ejs as view engine and set views folder
+app.set('view engine', 'ejs');
+app.set('views', './views');
+
+
 app.get('/', async (req, res) => {
-    const bots = await repository.BotRepository.findAll(req);
-    res.send(wrapper.success(bots));
+
+    res.render('index');
+    setInterval(() => {
+        test();
+    }, 2000);
 });
 
-app.listen(port, () => {
+function test() {
+    console.log('test')
+    emitNewWildFire({'startedAt': new Date()});
+}
+
+socket.initSocket(server);
+
+server.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 });

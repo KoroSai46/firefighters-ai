@@ -2,10 +2,10 @@
   "name": "firefighters-ai",
   "version": "1.0.0",
   "description": "",
-  "main": "index.js",
+  "main": "sockets/index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon app.js",
+    "dev": "nodemon -e js,ejs,html -w . -w public -w views -w routes -w models app.js",
     "start": "node app.js",
     "init": "node ./bin/init.js"
   },
@@ -19,6 +19,7 @@
     "sequelize": "^6.35.2",
     "sequelize-auto-migrations": "^1.0.3",
     "sequelize-auto-migrations-v2": "^1.2.1",
+    "socket.io": "^4.7.2",
     "uuid": "^9.0.1"
   },
   "devDependencies": {
