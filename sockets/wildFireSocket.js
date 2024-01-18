@@ -1,8 +1,9 @@
 const socket = require('./index');
+const Events = require('./events');
 
 function emitNewWildFire(wildFire) {
     const io = socket.getIO();
-    io.emit('fire start', wildFire);
+    io.emit(Events.FIRE_START, wildFire);
 }
 
 

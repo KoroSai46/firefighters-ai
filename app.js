@@ -6,12 +6,14 @@ const socket = require('./sockets/index');
 
 const app = express();
 const server = http.createServer(app);
-const port = 3000;
+const port = process.env.PORT || 3000;
 
-const repository = require('./repository/repository');
+const {BotRepository, FireStationRepository} = require('./repositories/repositories');
 const wrapper = require('./http/wrapper');
 
-const { emitNewWildFire } = require('./sockets/wildFireSocket');
+const {emitNewWildFire} = require('./sockets/wildFireSocket');
+
+const FireGenerationService = require('./services/FireGenerationService');
 
 //set ejs as view engine and set views folder
 app.set('view engine', 'ejs');
@@ -19,11 +21,12 @@ app.set('views', './views');
 
 
 app.get('/', async (req, res) => {
+    const bots = await BotRepository.findAll(req);
+    res.json(wrapper.success(bots));
+});
 
-    res.render('index');
-    setInterval(() => {
-        test();
-    }, 2000);
+app.get('/wildfires', async (req, res) => {
+    res.json(wrapper.success(await BotRepository.findAll(req)));
 });
 
 function test() {
@@ -32,6 +35,8 @@ function test() {
 }
 
 socket.initSocket(server);
+
+//(new FireGenerationService(process));
 
 server.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)

@@ -10,7 +10,9 @@ const Refiller = require('./Refiller');
 const TransportMode = require('./TransportMode');
 const WildFire = require('./WildFire');
 const WildFireState = require('./WildFireState');
-const { Canadair, FireFighters, Launcher, LightWeight, Tanker } = require('./FireFighters/models');
+const {Canadair, FireFighters, Launcher, LightWeight, Tanker} = require('./FireFighters/models');
+
+Bot.associate({FireStation});
 
 module.exports = {
     Assignment,

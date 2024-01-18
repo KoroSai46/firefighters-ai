@@ -16,7 +16,7 @@ module.exports = {
          * }], {});
          */
 
-        for (let i = 0; i < 100; i++) {
+        for (let i = 0; i < 10; i++) {
             console.log('Creating fire station', i);
             await FireStationFactory.create({
                 name: faker.company.name(),

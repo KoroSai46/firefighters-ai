@@ -1,12 +1,11 @@
 'use strict';
 const {Bot} = require('../models/models');
 
-const tableName = Bot.getTableName();
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        await queryInterface.createTable(tableName, {
+        await queryInterface.createTable('bot', {
             id: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
@@ -30,12 +29,19 @@ module.exports = {
                 type: Sequelize.INTEGER,
                 allowNull: false
             },
+            fireStationId: {
+                type: Sequelize.INTEGER,
+                references: {
+                    model: 'fireStation',
+                    key: 'id'
+                }
+            },
             createdAt: Sequelize.DATE,
             updatedAt: Sequelize.DATE
         });
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable(tableName);
+        await queryInterface.dropTable('bot');
     }
 };

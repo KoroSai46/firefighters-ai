@@ -19,7 +19,7 @@
 <script type="text/javascript" defer>
     const socket = io('http://localhost:3000');
 
-    socket.on('fire start', (data) => {
+    socket.on('fire:start', (data) => {
         console.log('fire start', data);
     });
 </script>

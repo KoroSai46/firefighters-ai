@@ -1,35 +1,43 @@
 const possibleQueryParams = [
     {
         key: 's',
-        default: null
+        default: null,
+        type: 'string'
     },
     {
         key: 'limit',
-        default: 10
+        default: 10,
+        type: 'number'
     },
     {
         key: 'page',
-        default: 1
+        default: 1,
+        type: 'number'
     },
     {
         key: 'sort',
-        default: 'ASC'
+        default: 'ASC',
+        type: 'string'
     },
     {
         key: 'order',
-        default: 'id'
+        default: 'id',
+        type: 'string'
     },
     {
         key: 'date',
-        default: null
+        default: null,
+        type: 'string'
     },
     {
         key: 'dateStart',
-        default: null
+        default: null,
+        type: 'string'
     },
     {
         key: 'dateEnd',
-        default: null
+        default: null,
+        type: 'string'
     },
 ]
 
@@ -74,11 +82,15 @@ async function findAllGeneric(model, req) {
         offset: (page - 1) * limit || 0,
     };
 
-    console.log(queryOptions);
-
     // Ajouter l'ordre si spécifié
     if (order && sort) {
         queryOptions.order = [[order, sort]];
+    }
+
+    // Récuperer les associations
+    if (model.associations) {
+        console.log(model.associations);
+        queryOptions.include = Object.keys(model.associations).map((association) => ({model: model.associations[association].target}));
     }
 
     const results = await model.findAll(queryOptions);
@@ -98,7 +110,11 @@ const generateQueries = (req, total, limit, page) => {
     const hasPreviousPage = currentPage > 1;
     let nextPage = null;
     let previousPage = null;
-    const currentFullUrl = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    let currentFullUrl = 'http://localhost:3000';
+
+    if (req) {
+        currentFullUrl = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
+    }
 
     if (hasNextPage) {
         //copy current url
@@ -128,11 +144,19 @@ const generateQueries = (req, total, limit, page) => {
 }
 
 const getQueryParams = (req) => {
-    const queryParams = req.query;
+    const queryParams = req?.query || {};
     const params = {};
 
     possibleQueryParams.forEach(queryParam => {
-        params[queryParam.key] = queryParams[queryParam.key] || queryParam.default;
+        if (queryParams[queryParam.key]) {
+            if (queryParam.type === 'number') {
+                params[queryParam.key] = parseInt(queryParams[queryParam.key]);
+            } else {
+                params[queryParam.key] = queryParams[queryParam.key];
+            }
+        } else {
+            params[queryParam.key] = queryParam.default;
+        }
     });
 
     return params;

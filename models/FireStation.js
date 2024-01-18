@@ -1,73 +1,7 @@
 const {Sequelize, DataTypes, Model} = require('sequelize');
 const sequelize = require('../database');
 
-class FireStation extends Model {
-    //set table name
-    static getTableName() {
-        return 'firestation';
-    }
-
-    getId() {
-        return this.id;
-    }
-
-    getName() {
-        return this.name;
-    }
-
-    getAddress() {
-        return this.address;
-    }
-
-    getLatitude() {
-        return this.latitude;
-    }
-
-    getLongitude() {
-        return this.longitude;
-    }
-
-    getCreatedAt() {
-        return this.createdAt;
-    }
-
-    getUpdatedAt() {
-        return this.updatedAt;
-    }
-
-    setName(name) {
-        this.name = name;
-        return this;
-    }
-
-    setAddress(address) {
-        this.address = address;
-        return this;
-    }
-
-    setLatitude(latitude) {
-        this.latitude = latitude;
-        return this;
-    }
-
-    setLongitude(longitude) {
-        this.longitude = longitude;
-        return this;
-    }
-
-    setCreatedAt(createdAt) {
-        this.createdAt = createdAt;
-        return this;
-    }
-
-    setUpdatedAt(updatedAt) {
-        this.updatedAt = updatedAt;
-        return this;
-    }
-
-}
-
-FireStation.init({
+const FireStation = sequelize.define('fireStation', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -92,7 +26,7 @@ FireStation.init({
 }, {
     sequelize,
     dialect: 'mysql',
-    tableName: FireStation.getTableName(),
+    tableName: 'fireStation',
 });
 
 module.exports = FireStation;
