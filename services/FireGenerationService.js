@@ -43,16 +43,19 @@ class FireGenerationService {
         if (Math.random() > 0.2) return chunk;
 
         if (Math.random() > 0.5) {
-            chunk
+            this.extendChunk(chunk);
         } else {
 
         }
     }
 
     extendChunk(chunk) {
-        
+
     }
 
+    /**
+     * @returns {*}
+     */
     upgradeChunkStrength(chunk) {
         chunk.strength += 1;
         return chunk;
