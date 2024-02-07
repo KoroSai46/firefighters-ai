@@ -1,3 +1,5 @@
+console.log('import base factory file');
+
 class BaseFactory {
     constructor(model) {
         this.model = model;

@@ -1,15 +1,7 @@
 const {DataTypes, Model} = require('sequelize');
 const sequelize = require('../database');
 
-class Fleet extends Model {
-    //set table name
-    static getTableName() {
-        return 'fleet';
-    }
-
-}
-
-Fleet.init({
+const Fleet = sequelize.define('Fleet', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -17,10 +9,17 @@ Fleet.init({
         allowNull: false,
     }
 }, {
-    sequelize,
-    dialect: 'mysql',
-    tableName: Fleet.getTableName(),
+    tableName: 'fleet', // Remplacez 'fleet' par le nom de votre table
     timestamps: true,
+    sequelize,
+    modelName: 'Fleet', // Ajout du nom du modèle
+    dialect: 'mysql',
 });
+
+Fleet.associate = (models) => {
+    Fleet.belongsToMany(models.Bot, {
+        through: 'Assignment',
+    });
+}
 
 module.exports = Fleet;

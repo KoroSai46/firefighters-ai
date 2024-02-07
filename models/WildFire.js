@@ -1,15 +1,7 @@
 const {DataTypes, Model} = require('sequelize');
 const sequelize = require('../database');
 
-class WildFire extends Model {
-    //set table name
-    static getTableName() {
-        return 'wildfire';
-    }
-
-}
-
-WildFire.init({
+const WildFire = sequelize.define('WildFire', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -25,10 +17,11 @@ WildFire.init({
         allowNull: true,
     }
 }, {
-    sequelize,
-    dialect: 'mysql',
-    tableName: WildFire.getTableName(),
+    tableName: 'wildfire', // Remplacez 'wildfire' par le nom de votre table
     timestamps: true,
+    sequelize,
+    modelName: 'WildFire', // Ajout du nom du modèle
+    dialect: 'mysql',
 });
 
 module.exports = WildFire;

@@ -2,6 +2,7 @@ require('dotenv').config();
 
 const express = require('express');
 const http = require('http');
+const cors = require('cors');
 const socket = require('./sockets/index');
 
 const app = express();
@@ -15,28 +16,27 @@ const {emitNewWildFire} = require('./sockets/wildFireSocket');
 
 const FireGenerationService = require('./services/FireGenerationService');
 
+const router = require('./routes');
+
 //set ejs as view engine and set views folder
 app.set('view engine', 'ejs');
 app.set('views', './views');
 
+//allow all cors requests
 
-app.get('/', async (req, res) => {
-    const bots = await BotRepository.findAll(req);
-    res.json(wrapper.success(bots));
-});
+app.use(cors({
+    origin: '*'
+}));
 
-app.get('/wildfires', async (req, res) => {
-    res.json(wrapper.success(await BotRepository.findAll(req)));
-});
 
-function test() {
-    console.log('test')
-    emitNewWildFire({'startedAt': new Date()});
-}
+//routes
+app.use('/', router);
+
 
 socket.initSocket(server);
 
-//(new FireGenerationService(process));
+
+(new FireGenerationService(process));
 
 server.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)

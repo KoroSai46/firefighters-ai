@@ -14,19 +14,17 @@ const FireStation = sequelize.define('fireStation', {
     address: {
         type: DataTypes.STRING,
         allowNull: false
-    },
-    latitude: {
-        type: DataTypes.FLOAT,
-        allowNull: false
-    },
-    longitude: {
-        type: DataTypes.FLOAT,
-        allowNull: false
     }
 }, {
     sequelize,
     dialect: 'mysql',
     tableName: 'fireStation',
 });
+
+FireStation.associate = (models) => {
+    FireStation.belongsToMany(models.Coordinates, {
+        through: 'FireStationCoordinates',
+    })
+};
 
 module.exports = FireStation;

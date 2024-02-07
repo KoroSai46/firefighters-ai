@@ -1,4 +1,4 @@
-//FireStation factory
+//FireStationFactory factory
 const {FireStation} = require('../models/models');
 const sequelize = require('../database');
 const BaseFactory = require('./BaseFactory');

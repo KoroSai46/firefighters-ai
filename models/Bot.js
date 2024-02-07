@@ -18,11 +18,7 @@ const Bot = sequelize.define('bot',
             type: DataTypes.INTEGER,
             allowNull: false,
         },
-        maxAutonomy: {
-            type: DataTypes.INTEGER,
-            allowNull: false,
-        },
-        currentAutonomy: {
+        flowStrength: {
             type: DataTypes.INTEGER,
             allowNull: false,
         },
@@ -45,6 +41,15 @@ Bot.associate = (models) => {
             allowNull: false
         },
         onDelete: 'CASCADE'
+    });
+
+    Bot.belongsToMany(models.Coordinates, {
+        through: 'BotCoordinates',
+        foreignKey: 'botId',
+    });
+
+    Bot.belongsToMany(models.Fleet, {
+        through: 'Assignment',
     });
 };
 
