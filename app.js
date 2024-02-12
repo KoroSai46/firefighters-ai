@@ -18,7 +18,7 @@ const FireGenerationService = require('./services/FireGenerationService');
 //set ejs as view engine and set views folder
 app.set('view engine', 'ejs');
 app.set('views', './views');
-
+app.use(express.static('public'));
 
 app.get('/', async (req, res) => {
     const bots = await BotRepository.findAll(req);
@@ -29,10 +29,8 @@ app.get('/wildfires', async (req, res) => {
     res.json(wrapper.success(await BotRepository.findAll(req)));
 });
 
-function test() {
-    console.log('test')
-    emitNewWildFire({'startedAt': new Date()});
-}
+const routes = require('./routes');
+app.use('/', routes);
 
 socket.initSocket(server);
 

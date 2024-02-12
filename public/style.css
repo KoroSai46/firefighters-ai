@@ -1,7 +1,107 @@
-.firefighters-ai {
-    display: flex;
-    flex-direction: column;
-    justify-content: center;
-    align-items: center;
+@import url('https://fonts.googleapis.com/css2?family=Poppins&display=swap');
+
+:root {
+    --grey: #d9d8d8;
+}
+
+div::-webkit-scrollbar {
+    width: 4px;
+}
+
+div::-webkit-scrollbar-thumb {
+    background-color: #a0a0a0;
+    border-radius: 4px;
+}
+
+.hidden {
+    display: none !important;
+}
+
+.text-sm {
+    font-size: 0.6rem;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    font-family: 'Poppins', sans-serif;
+    overflow: hidden;
+}
+
+main {
     height: 100vh;
+    font-size: 0.8rem;
+}
+
+#map {
+    width: 100vw;
+    height: 100vh;
+}
+
+.panel {
+    position: absolute;
+    top: 50px;
+    min-width: 150px;
+    background-color: white;
+    border: 1px solid var(--grey);
+    border-radius: 10px;
+    z-index: 9999;
+    padding: 10px;
+}
+
+.panel-header {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+    padding-bottom: 5px;
+    margin-bottom: 5px;
+    border-bottom: 1px solid var(--grey);
+}
+
+.panel-body {
+    max-height: 30vh;
+    overflow-y: auto;
+}
+
+#wildfires-panel {
+    left: calc(100vw - 150px - 50px);
+}
+
+#bots-panel {
+    left: 50px;
+}
+
+.panel-bot, .panel-wildfire {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    padding: 2px;
+    border-radius: 5px;
+    gap: 10px;
+    cursor: pointer;
+}
+
+.panel-bot:hover, .panel-wildfire:hover {
+    background-color: var(--grey);
+}
+
+.svg {
+    width: 24px;
+    height: 24px;
+}
+
+.drag {
+    cursor: move;
+}
+
+#coordinates {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background-color: white;
+    border: 1px solid var(--grey);
+    border-radius: 10px;
+    z-index: 9998;
+    padding: 5px 25px;
 }

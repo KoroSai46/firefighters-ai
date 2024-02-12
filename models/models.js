@@ -2,7 +2,6 @@
 const Assignment = require('./Assignment');
 const Bot = require('./Bot');
 const Coordinates = require('./Coordinates');
-const Chunk = require('./Chunk');
 const FireStation = require('./FireStation');
 const Fleet = require('./Fleet');
 const Helpers = require('./Helpers');
@@ -18,7 +17,6 @@ module.exports = {
     Assignment,
     Bot,
     Coordinates,
-    Chunk,
     FireStation,
     Fleet,
     Helpers,
