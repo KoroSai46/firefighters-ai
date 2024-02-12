@@ -89,7 +89,6 @@ async function findAllGeneric(model, req) {
 
     // Récuperer les associations
     if (model.associations) {
-        console.log(model.associations);
         queryOptions.include = Object.keys(model.associations).map((association) => ({model: model.associations[association].target}));
     }
 

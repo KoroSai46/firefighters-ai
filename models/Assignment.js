@@ -1,30 +1,19 @@
 const {DataTypes, Model} = require('sequelize');
 const sequelize = require('../database');
 
-class Assignment extends Model {
-    //set table name
-    static getTableName() {
-        return 'coordinates';
-    }
-
-}
-
-Assignment.init({
+const Assignment = sequelize.define('Assignment', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
         primaryKey: true,
         allowNull: false,
     },
-    timestamp: {
-        type: DataTypes.DATE,
-        allowNull: false,
-    }
 }, {
-    sequelize,
-    dialect: 'mysql',
-    tableName: Assignment.getTableName(),
+    tableName: 'assignment',
     timestamps: true,
+    sequelize,
+    modelName: 'Assignment',
+    dialect: 'mysql',
 });
 
 module.exports = Assignment;

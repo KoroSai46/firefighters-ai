@@ -12,7 +12,7 @@ class FireStationRepository {
     }
 
     static async create(fireStation) {
-        return await FireStation.create(fireStation);
+        return FireStation.create(fireStation);
     }
 
     static async update(fireStation) {

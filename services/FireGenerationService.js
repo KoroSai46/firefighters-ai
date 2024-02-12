@@ -1,11 +1,11 @@
 const {faker} = require('@faker-js/faker');
-const {WildFireFactory} = require('../factorys/factorys');
-const {emitNewWildFire} = require('../sockets/wildFireSocket');
+const {WildFireFactory, WildFireStateFactory, WildFireStateCoordinatesFactory} = require('../factories/factories');
+const {emitNewWildFire, emitNewWildFireState} = require('../sockets/wildFireSocket');
+const CoordinatesFactory = require("../factories/CoordinatesFactory");
 
 
 class FireGenerationService {
     constructor(process) {
-        console.log('FireGenerationService constructor');
         this.start();
     }
 
@@ -14,9 +14,8 @@ class FireGenerationService {
     }
 
     tryToGenerateFire() {
-        console.log('Trying to generate fire ' + new Date().toLocaleString('fr-FR', {timeZone: 'Europe/Paris'}));
         // 5% chance to generate fire
-        if (Math.random() < 0.05) {
+        if (Math.random() < 0.50) {
             this.generateFire();
         }
 
@@ -27,10 +26,24 @@ class FireGenerationService {
     }
 
     async generateFire() {
-        console.log('Generating fire');
         const fire = await WildFireFactory.create({'startedAt': new Date()});
 
         emitNewWildFire(fire);
+
+        const fireState = await WildFireStateFactory.create({
+            'wildFireId': fire.id,
+            'startedAt': new Date(),
+        });
+
+        const coordinatesInstance = await CoordinatesFactory.create({
+            latitude: faker.location.latitude(),
+            longitude: faker.location.longitude(),
+            timestamp: new Date()
+        });
+
+        fireState.addCoordinates(coordinatesInstance);
+
+        emitNewWildFireState(fireState);
     }
 
     async updateFire(fire) {

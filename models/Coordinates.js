@@ -1,15 +1,8 @@
 const {DataTypes, Model} = require('sequelize');
 const sequelize = require('../database');
+const {Bot} = require("./models");
 
-class Coordinates extends Model {
-    //set table name
-    static getTableName() {
-        return 'coordinates';
-    }
-
-}
-
-Coordinates.init({
+const Coordinates = sequelize.define('Coordinates', {
     id: {
         type: DataTypes.INTEGER,
         autoIncrement: true,
@@ -29,10 +22,28 @@ Coordinates.init({
         allowNull: false,
     }
 }, {
+    tableName: 'coordinates', // Remplacez 'coordinates' par le nom de votre table
     sequelize,
+    modelName: 'Coordinates', // Ajout du nom du modèle
     dialect: 'mysql',
-    tableName: Coordinates.getTableName(),
     timestamps: true,
 });
+
+Coordinates.associate = (models) => {
+    Coordinates.belongsToMany(models.Bot, {
+        through: 'BotCoordinates',
+        foreignKey: 'coordinatesId',
+    });
+
+    Coordinates.belongsToMany(models.WildFireState, {
+        through: 'WildFireStateCoordinates',
+        foreignKey: 'coordinatesId',
+    });
+
+    Coordinates.belongsToMany(models.FireStation, {
+        through: 'FireStationCoordinates',
+        foreignKey: 'coordinatesId',
+    });
+}
 
 module.exports = Coordinates;
