@@ -5,19 +5,18 @@ const BaseFactory = require('./BaseFactory');
 const {faker} = require('@faker-js/faker');
 
 class CoordinatesFactory extends BaseFactory {
+    geojson = require('../data/france.geo.json');
+
     constructor() {
         super(Coordinates);
     }
 
     async createFrenchCoordinates() {
         const turf = require('@turf/turf');
-        const franceGeoJSON = require('../data/france.geo.json');
-        const franceArea = turf.area(franceGeoJSON);
-        const franceZone = turf.area(franceGeoJSON);
+        const franceGeoJSON = this.geojson;
 
         let point;
         do {
-            // Générer un point aléatoire dans un rectangle enveloppant la France
             const bbox = turf.bbox(franceGeoJSON);
             const randomPoint = turf.randomPoint(1, {bbox: bbox});
             point = randomPoint.features[0];

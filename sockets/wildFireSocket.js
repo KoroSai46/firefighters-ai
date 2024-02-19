@@ -11,8 +11,14 @@ function emitNewWildFireState(wildFireState) {
     io.emit(Events.FIRE_UPDATE, wildFireState);
 }
 
+function emitUpdateFires(fires) {
+    const io = socket.getIO();
+    io.emit(Events.FIRES_UPDATE, fires);
+}
+
 
 module.exports = {
     emitNewWildFire,
-    emitNewWildFireState
+    emitNewWildFireState,
+    emitUpdateFires
 }

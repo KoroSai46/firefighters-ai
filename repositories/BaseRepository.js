@@ -30,6 +30,10 @@ class BaseRepository {
     async deleteById(id) {
         return await this.model.destroy({where: {id}});
     }
+
+    getConnection() {
+        return this.model.sequelize;
+    }
 }
 
 module.exports = BaseRepository;
