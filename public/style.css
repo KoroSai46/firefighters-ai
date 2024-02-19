@@ -86,7 +86,7 @@ main {
     background-color: var(--grey);
 }
 
-.svg {
+.panel-marker {
     width: 24px;
     height: 24px;
 }
@@ -107,11 +107,10 @@ main {
 }
 
 .bot-marker {
-    background-image: url('mapbox-icon.png');
+    background-image: url('images/markers/bot.png');
     background-size: cover;
-    width: 50px;
-    height: 50px;
-    border-radius: 50%;
+    width: 30px;
+    height: 30px;
     cursor: pointer;
     transition: transform 0.5s !important;
 }
