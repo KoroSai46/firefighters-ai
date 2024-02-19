@@ -6,24 +6,16 @@ const Bots = (function () {
         this._body = this._panel.querySelector('.panel-body');
         this._template = document.getElementById('template-panel-bot');
         this._bots = [];
+        this._botsMarkers = [];
+        this._geogson = {
+            type: 'FeatureCollection',
+            features: [],
+        };
         this._init();
     }
 
     BotsS.prototype._init = function () {
-        this.fetch().then(bots => {
-            this._bots = bots;
-            bots.forEach(bot => {
-                this.addToPanel(bot);
-            });
-        });
-    }
 
-    BotsS.prototype.fetch = function () {
-        return new Promise((resolve) => {
-            fetch(`${BACKEND_URL}/bots`).then(response => response.json()).then(bots => {
-                resolve(bots.data.results);
-            });
-        });
     }
 
     BotsS.prototype.addToPanel = function (bot) {
@@ -49,6 +41,36 @@ const Bots = (function () {
         this._body.innerHTML = '';
     }
 
+    BotsS.prototype.getGeojson = function () {
+        return this._geogson;
+    }
+
+    BotsS.prototype.updateBots = function (updatedBots) {
+        updatedBots = updatedBots.results;
+
+        updatedBots.forEach(bot => {
+            if (this._bots.find(b => b.id === bot.id)) {
+                this._bots.find(b => b.id === bot.id).Coordinates.push(bot.Coordinates[bot.Coordinates.length - 1]);
+                this._geogson.features.find(b => b.properties.id === bot.id).geometry.coordinates = [bot.Coordinates[bot.Coordinates.length - 1].longitude, bot.Coordinates[bot.Coordinates.length - 1].latitude];
+            } else {
+                this._bots.push(bot);
+                this.addToPanel(bot);
+                Mapbox.getInstance().addBot(bot);
+            }
+        });
+
+        for (const bot in this._bots) {
+            if (!updatedBots.find(b => b.id === bot.id)) {
+                this.removeFromPanel(bot.id);
+                this._bots = this._bots.filter(b => b.id !== bot.id);
+                this._geogson.features = this._geogson.features.filter(b => b.properties.id !== bot.id);
+                Mapbox.getInstance().getBotManager(bot.id);
+            }
+        }
+
+        Mapbox.getInstance().drawMarkers();
+    }
+
     return {
         getInstance: function () {
             if (!instance) {
@@ -66,6 +88,22 @@ const Wildfires = (function () {
         this._panel = document.getElementById('wildfires-panel');
         this._body = this._panel.querySelector('.panel-body');
         this._template = document.getElementById('template-panel-wildfire');
+    }
+
+    WildfiresS.prototype._init = function () {
+        this.fetch().then(wildfires => {
+            wildfires.forEach(wildfire => {
+                this.add(wildfire);
+            });
+        });
+    }
+
+    WildfiresS.prototype.fetch = function () {
+        return new Promise((resolve) => {
+            fetch(`${BACKEND_URL}/wildfires`).then(response => response.json()).then(wildfires => {
+                resolve(wildfires.data.results);
+            });
+        });
     }
 
     WildfiresS.prototype.add = function (wildfire) {
@@ -181,7 +219,7 @@ const Mapbox = (function () {
     MapboxS.prototype.draw = function () {
         return new Promise(async (resolve) => {
             await this.addWildfiresLayer();
-            await this.addBotsLayer();
+            await this.drawMarkers();
 
             resolve();
         });
@@ -236,6 +274,36 @@ const Mapbox = (function () {
         });
     }
 
+    MapboxS.prototype.drawMarkers = function () {
+        //get markers from BotsS
+        let botGeojson = Bots.getInstance()._geogson;
+        for (const bot of botGeojson.features) {
+            //check if bot already has a marker
+            if (Bots.getInstance()._botsMarkers.find(marker => marker.id === bot.properties.id)) {
+                //update marker lat and long
+                Bots.getInstance()._botsMarkers.find(marker => marker.id === bot.properties.id).marker.setLngLat(bot.geometry.coordinates);
+            } else {
+                let el = document.createElement('div');
+                el.dataset.id = bot.properties.id;
+                el.className = 'bot-marker';
+
+                let marker = new mapboxgl.Marker(el)
+                    .setLngLat(bot.geometry.coordinates)
+                    .addTo(this._map);
+
+                Bots.getInstance()._botsMarkers.push({id: bot.properties.id, marker: marker});
+            }
+        }
+
+        //remove markers that are not in the geojson
+        for (const marker of Bots.getInstance()._botsMarkers) {
+            if (!botGeojson.features.find(bot => bot.properties.id === marker.id)) {
+                marker.marker.remove();
+                Bots.getInstance()._botsMarkers = Bots.getInstance()._botsMarkers.filter(bot => bot.id !== marker.id);
+            }
+        }
+    }
+
     return {
         getInstance: function () {
             if (!instance) {
@@ -283,21 +351,22 @@ class BotManager {
     }
 
     _init() {
-        console.log(this._bot.Coordinates[this._bot.Coordinates.length - 1]);
-        Mapbox.getInstance().getMap().getSource('bots-source').setData(
-            {
-                type: 'FeatureCollection',
-                features: [
-                    {
-                        type: 'Feature',
-                        geometry: {
-                            type: 'Point',
-                            coordinates: [this._bot.Coordinates[this._bot.Coordinates.length - 1].longitude, this._bot.Coordinates[this._bot.Coordinates.length - 1].latitude],
-                        },
-                    },
-                ],
-            }
-        );
+        //add bot to geojson feature collection from BotsS
+        Bots.getInstance()._geogson.features.push({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [this._bot.Coordinates[this._bot.Coordinates.length - 1].longitude, this._bot.Coordinates[this._bot.Coordinates.length - 1].latitude],
+            },
+            properties: {
+                title: 'Bot',
+                description: 'Bot',
+                id: this._bot.id,
+            },
+        });
+
+        //update source
+        Mapbox.getInstance().drawMarkers();
     }
 }
 
@@ -322,6 +391,15 @@ class Realtime {
             socket.on('fire:update', (data) => {
                 mapbox.addWildfireState(data);
             });
+
+            socket.on('bots:update', (data) => {
+                Bots.getInstance().updateBots(data);
+            });
+
+            setInterval(() => {
+
+                Mapbox.getInstance().drawMarkers();
+            }, 1000);
         });
     }
 }

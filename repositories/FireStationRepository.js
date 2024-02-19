@@ -1,35 +1,12 @@
 const {FireStation} = require('../models/models');
-const helpers = require('./helpers');
+const BaseRepository = require("./BaseRepository");
 
-class FireStationRepository {
-
-    static async findAll(req) {
-        return await helpers.findAllGeneric(FireStation, req);
-    }
-
-    static async findById(id) {
-        return await FireStation.findByPk(id);
-    }
-
-    static async create(fireStation) {
-        return FireStation.create(fireStation);
-    }
-
-    static async update(fireStation) {
-        return await fireStation.save();
-    }
-
-    static async delete(fireStation) {
-        return await fireStation.destroy();
-    }
-
-    static async deleteById(id) {
-        return await FireStation.destroy({
-            where: {
-                id: id
-            }
-        });
+class FireStationRepository extends BaseRepository {
+    constructor() {
+        super(FireStation);
     }
 }
 
-module.exports = FireStationRepository;
+const fireStationRepositoryInstance = new FireStationRepository();
+
+module.exports = fireStationRepositoryInstance;

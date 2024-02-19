@@ -20,6 +20,14 @@ Fleet.associate = (models) => {
     Fleet.belongsToMany(models.Bot, {
         through: 'Assignment',
     });
+
+    Fleet.belongsTo(models.WildFire, {
+        foreignKey: {
+            name: 'wildFireId',
+            allowNull: false,
+        },
+        onDelete: 'CASCADE'
+    });
 }
 
 module.exports = Fleet;

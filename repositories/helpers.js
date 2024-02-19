@@ -43,11 +43,8 @@ const possibleQueryParams = [
 
 const {Op} = require('sequelize');
 
-async function findAllGeneric(model, req) {
+async function findAllGeneric(model, req, where = {}) {
     const {s, limit, page, order, sort, date, dateStart, dateEnd} = getQueryParams(req);
-
-    // Construire l'objet de filtre
-    const where = {};
 
     if (s) {
         // Ajouter une condition LIKE pour la recherche
@@ -89,7 +86,14 @@ async function findAllGeneric(model, req) {
 
     // Récuperer les associations
     if (model.associations) {
-        queryOptions.include = Object.keys(model.associations).map((association) => ({model: model.associations[association].target}));
+        let includes = [];
+        Object.keys(model.associations).forEach(association => {
+            let include = {model: model.associations[association].target};
+            //check if association is Coordinates
+            includes.push(include);
+        });
+
+        queryOptions.include = includes;
     }
 
     const results = await model.findAll(queryOptions);

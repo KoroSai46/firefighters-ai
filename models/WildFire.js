@@ -24,4 +24,18 @@ const WildFire = sequelize.define('WildFire', {
     dialect: 'mysql',
 });
 
+WildFire.associate = (models) => {
+    WildFire.belongsToMany(models.Coordinates, {
+        through: 'WildFireCoordinates',
+        foreignKey: 'wildFireId',
+    });
+    WildFire.hasMany(models.WildFireState, {
+        foreignKey: {
+            name: 'wildFireId',
+            allowNull: false,
+        },
+        onDelete: 'CASCADE'
+    });
+}
+
 module.exports = WildFire;

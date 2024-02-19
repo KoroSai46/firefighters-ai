@@ -13,6 +13,14 @@ class BaseFactory {
             console.error('Error creating record:', error);
         }
     }
+
+    async update(id, params) {
+        try {
+            return await this.model.update(params, {where: {id}});
+        } catch (error) {
+            console.error('Error updating record:', error);
+        }
+    }
 }
 
 module.exports = BaseFactory;

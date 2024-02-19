@@ -24,7 +24,7 @@ WildFireState.associate = (models) => {
     WildFireState.belongsTo(models.WildFire, {
         foreignKey: {
             name: 'wildFireId',
-            allowNull: false
+            allowNull: false,
         },
         onDelete: 'CASCADE'
     });

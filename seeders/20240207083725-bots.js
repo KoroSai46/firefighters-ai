@@ -2,19 +2,13 @@
 
 const {BotFactory, CoordinatesFactory} = require('../factories/factories');
 const {faker} = require('@faker-js/faker');
+const {FireStationRepository} = require('../repositories/repositories');
 
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        /**
-         * Add seed commands here.
-         *
-         * Example:
-         * await queryInterface.bulkInsert('People', [{
-         *   name: 'John Doe',
-         *   isBetaMember: false
-         * }], {});
-         */
+        let fireStations = await FireStationRepository.findAll();
+        fireStations = fireStations.results;
         for (let i = 0; i < 10; i++) {
             let bot = {
                 uuid: faker.string.uuid(),
@@ -26,6 +20,7 @@ module.exports = {
                     min: 1,
                     max: 5
                 }),
+                fireStationId: fireStations[Math.floor(Math.random() * fireStations.length)].id
             };
 
             let createdBot = await BotFactory.create(bot);

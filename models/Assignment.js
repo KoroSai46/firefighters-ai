@@ -8,6 +8,15 @@ const Assignment = sequelize.define('Assignment', {
         primaryKey: true,
         allowNull: false,
     },
+    startedAt: {
+        type: DataTypes.DATE,
+        allowNull: false,
+        defaultValue: new Date(),
+    },
+    endedAt: {
+        type: DataTypes.DATE,
+        allowNull: true,
+    }
 }, {
     tableName: 'assignment',
     timestamps: true,

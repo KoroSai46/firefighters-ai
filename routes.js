@@ -1,5 +1,5 @@
 const router = require('express').Router();
-const {BotRepository, FireStationRepository} = require('./repositories/repositories');
+const {BotRepository, FireStationRepository, WildFireRepository} = require('./repositories/repositories');
 const wrapper = require('./http/wrapper');
 const MapService = require("./services/MapService");
 
@@ -29,6 +29,14 @@ router.get('/navigation', async (req, res) => {
         .then(data => {
             res.json(wrapper.success(data));
         });
+});
+
+router.get('/wildfires', async (req, res) => {
+    res.json(wrapper.success(await WildFireRepository.findAll(req)));
+});
+
+router.get('/test', async (req, res) => {
+    res.json(wrapper.success(await BotRepository.findAllAvailable(req)));
 });
 
 module.exports = router;

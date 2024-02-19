@@ -15,9 +15,11 @@ Coordinates.associate({Bot, FireStation, WildFireState});
 
 FireStation.associate({Coordinates});
 
-Fleet.associate({Bot});
+Fleet.associate({Bot, WildFire});
 
 WildFireState.associate({WildFire, Coordinates});
+
+WildFire.associate({Coordinates, WildFireState});
 
 
 module.exports = {

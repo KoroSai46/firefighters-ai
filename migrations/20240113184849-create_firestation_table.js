@@ -251,11 +251,15 @@ module.exports = {
                 onDelete: 'cascade'
             },
             createdAt: Sequelize.DATE,
-            updatedAt: Sequelize.DATE
+            updatedAt: Sequelize.DATE,
+            startedAt: Sequelize.DATE,
+            endedAt: {
+                type: Sequelize.DATE,
+                allowNull: true
+            }
         });
     },
 
     async down(queryInterface, Sequelize) {
-        await queryInterface.dropTable('fireStation');
     }
 };

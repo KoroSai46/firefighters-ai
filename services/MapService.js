@@ -24,6 +24,11 @@ class MapService {
             });
 
     }
+
+    async getDuration(departure, arrival) {
+        const data = await this.navigateToLocation(departure, arrival);
+        return data.routes[0].duration;
+    }
 }
 
 module.exports = new MapService();

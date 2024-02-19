@@ -1,7 +1,9 @@
 const {faker} = require('@faker-js/faker');
-const {WildFireFactory, WildFireStateFactory, WildFireStateCoordinatesFactory} = require('../factories/factories');
+const {WildFireFactory, WildFireStateFactory, CoordinatesFactory} = require('../factories/factories');
 const {emitNewWildFire, emitNewWildFireState} = require('../sockets/wildFireSocket');
-const CoordinatesFactory = require("../factories/CoordinatesFactory");
+const {BotRepository} = require('../repositories/repositories');
+const MapService = require('./MapService');
+const BotService = require('./BotService');
 
 
 class FireGenerationService {
@@ -28,23 +30,24 @@ class FireGenerationService {
     async generateFire() {
         const fire = await WildFireFactory.create({'startedAt': new Date()});
 
-        emitNewWildFire(fire);
+        // emitNewWildFire(fire);
 
         const fireState = await WildFireStateFactory.create({
             'wildFireId': fire.id,
             'startedAt': new Date(),
         });
 
-        const coordinatesInstance = await CoordinatesFactory.create({
-            latitude: faker.location.latitude(),
-            longitude: faker.location.longitude(),
-            timestamp: new Date()
-        });
+        const coordinatesInstance = await CoordinatesFactory.createFrenchCoordinates();
 
-        fireState.addCoordinates(coordinatesInstance);
 
-        emitNewWildFireState(fireState);
+        await fireState.addCoordinates(coordinatesInstance);
+
+
+        //await BotService.createFleet(fire);
+
+        // emitNewWildFireState(fireState);
     }
+
 
     async updateFire(fire) {
         fire.getChunks().forEach(chunk => {
