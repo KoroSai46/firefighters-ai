@@ -43,7 +43,10 @@ const possibleQueryParams = [
 
 const {Op} = require('sequelize');
 
-async function findAllGeneric(model, req, where = {}) {
+async function findAllGeneric(model, req, where = {}, {
+    noLimit = false,
+    withAssoc = true
+} = {}) {
     const {s, limit, page, order, sort, date, dateStart, dateEnd} = getQueryParams(req);
 
     if (s) {
@@ -72,12 +75,19 @@ async function findAllGeneric(model, req, where = {}) {
         }
     }
 
-    // Construire l'objet d'options pour la requête
-    const queryOptions = {
-        where,
-        limit: limit || 10,
-        offset: (page - 1) * limit || 0,
-    };
+    let queryOptions = {};
+
+    if (limit === null || noLimit) {
+        queryOptions = {
+            where,
+        };
+    } else {
+        queryOptions = {
+            where,
+            limit: limit || 10,
+            offset: (page - 1) * limit || 0,
+        };
+    }
 
     // Ajouter l'ordre si spécifié
     if (order && sort) {
@@ -85,7 +95,7 @@ async function findAllGeneric(model, req, where = {}) {
     }
 
     // Récuperer les associations
-    if (model.associations) {
+    if (withAssoc && model.associations) {
         let includes = [];
         Object.keys(model.associations).forEach(association => {
             let include = {model: model.associations[association].target};
@@ -107,6 +117,18 @@ async function findAllGeneric(model, req, where = {}) {
 }
 
 const generateQueries = (req, total, limit, page) => {
+    if (limit === null) {
+        //no limit
+        return {
+            total,
+            totalPages: 1,
+            currentPage: 1,
+            hasNextPage: false,
+            hasPreviousPage: false,
+            nextPage: null,
+            previousPage: null,
+        };
+    }
     const totalPages = Math.ceil(total / (limit || 10));
     const currentPage = page || 1;
     const hasNextPage = currentPage < totalPages;
@@ -115,7 +137,7 @@ const generateQueries = (req, total, limit, page) => {
     let previousPage = null;
     let currentFullUrl = 'http://localhost:3000';
 
-    if (req) {
+    if (req !== undefined && Object.keys(req).length > 0) {
         currentFullUrl = new URL(`${req.protocol}://${req.get('host')}${req.originalUrl}`);
     }
 
@@ -154,6 +176,9 @@ const getQueryParams = (req) => {
         if (queryParams[queryParam.key]) {
             if (queryParam.type === 'number') {
                 params[queryParam.key] = parseInt(queryParams[queryParam.key]);
+            } else if (queryParam.type === 'boolean') {
+                //parse to boolean
+                params[queryParam.key] = queryParams[queryParam.key] === 'true';
             } else {
                 params[queryParam.key] = queryParams[queryParam.key];
             }

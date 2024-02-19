@@ -14,17 +14,8 @@ class BotService {
     }
 
     async refreshBots() {
-        let newBots = [];
-        let bots = await BotRepository.findAll();
-        bots.results.forEach(bot => {
-            //limit Coordinates to 10, only the last 10 coordinates
-            bot.Coordinates = bot.Coordinates.slice(-10);
-            bot.dataValues.Coordinates = bot.Coordinates;
-            bot._previousDataValues.Coordinates = bot.Coordinates;
-
-            newBots.push(bot);
-        });
-        this._bots = newBots;
+        let bots = await BotRepository.findAllWithCoordinatesLimit();
+        this._bots = bots.results;
         this._queries = bots.queries;
     }
 
@@ -33,7 +24,6 @@ class BotService {
         for (let i = 0; i < this._bots.length; i++) {
             let bot = this._bots[i];
             let botEntity = await BotRepository.findById(bot.id);
-            let coordinates = await botEntity.getCoordinates();
             let newCoordinates = await CoordinatesFactory.createFrenchCoordinates();
             await botEntity.addCoordinate(newCoordinates);
         }

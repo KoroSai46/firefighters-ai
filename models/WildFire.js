@@ -25,16 +25,12 @@ const WildFire = sequelize.define('WildFire', {
 });
 
 WildFire.associate = (models) => {
-    WildFire.belongsToMany(models.Coordinates, {
-        through: 'WildFireCoordinates',
-        foreignKey: 'wildFireId',
-    });
     WildFire.hasMany(models.WildFireState, {
         foreignKey: {
             name: 'wildFireId',
             allowNull: false,
         },
-        onDelete: 'CASCADE'
+        onDelete: 'CASCADE',
     });
 }
 
