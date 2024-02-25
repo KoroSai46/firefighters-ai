@@ -109,7 +109,6 @@ const Wildfires = (function () {
 
     WildfiresS.prototype.add = function (wildfire) {
         this._wildfires.push(wildfire);
-        const coordinates = wildfire.Coordinates.map(coordinate => [coordinate.longitude, coordinate.latitude]);
         this._geogson.features.push({
             type: 'Feature',
             geometry: {
@@ -178,9 +177,19 @@ const Wildfires = (function () {
     }
 
     WildfiresS.prototype.buildCoordinates = function (coordinates) {
-        //order coordinates clockwise
-        
-    }
+        const referencePoint = coordinates[0];
+
+        coordinates.sort((a, b) => {
+            const crossProduct = (p1, p2) => {
+                return (p1.longitude - referencePoint.longitude) * (p2.latitude - referencePoint.latitude) -
+                    (p2.longitude - referencePoint.longitude) * (p1.latitude - referencePoint.latitude);
+            };
+
+            return Math.atan2(crossProduct(a, b), a.latitude - referencePoint.latitude) - Math.atan2(crossProduct(b, a), b.latitude - referencePoint.latitude);
+        });
+
+        return [coordinates.map(c => [c.longitude, c.latitude])];
+    };
 
     return {
         getInstance: function () {
