@@ -158,7 +158,7 @@ class BotService {
             this._updatedBots.push(bot);
         }
         const botId = bot.id;
-        let navStep = this._botNavigationSteps.find(navStep => navStep.botId === botId);
+        let navStep = this._botNavigationSteps.find(navStep => navStep?.botId === botId);
         if (navStep === undefined) {
             let geojson = await BotRepository.getLastGeoJson(botId);
             let steps = geojson.geojson.routes[0].legs[0].steps;
@@ -169,13 +169,13 @@ class BotService {
                 steps,
                 botId
             });
-            navStep = this._botNavigationSteps.find(navStep => navStep.botId === botId);
+            navStep = this._botNavigationSteps.find(navStep => navStep?.botId === botId);
         }
 
         //check if the bot has arrived
         if (navStep.step === navStep.steps.length - 1) {
             //remove the bot from the occupied list
-            let index = this._botNavigationSteps.findIndex(navStep => navStep.botId === botId);
+            let index = this._botNavigationSteps.findIndex(navStep => navStep?.botId === botId);
             delete this._botNavigationSteps[index];
             return;
         }

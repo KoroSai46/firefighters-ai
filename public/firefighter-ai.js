@@ -37,3 +37,7 @@ document.querySelectorAll('#parameters-panel input[data-property]').forEach(func
         socket.emit('parameter:update', {property, value});
     });
 });
+
+socket.on('parameter:update', function (parameter) {
+    document.querySelector(`#parameters-panel input[data-property="${parameter.parameter}"]`).value = parameter.value;
+});

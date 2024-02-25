@@ -49,8 +49,6 @@ app.get('/routes', (req, res) => {
 
 socket.initSocket(server);
 
-(new FireGenerationService(process));
-
 server.listen(port, () => {
     console.log(`Example app listening at http://localhost:${port}`)
 });
