@@ -45,6 +45,26 @@ class BotRepository extends BaseRepository {
             queries: botsQuery.queries,
         }
     }
+
+    async getLastGeoJson(botId) {
+        let fleetQuery = `SELECT fleetId
+                          FROM assignment
+                          WHERE botId = ${botId}
+                          ORDER BY createdAt DESC
+                          LIMIT 1;`;
+
+        let fleetResult = await this.getConnection().query(fleetQuery, {type: Sequelize.QueryTypes.SELECT});
+
+        let fleetId = fleetResult[0].fleetId;
+
+        let query = `SELECT geojson
+                     FROM assignment
+                     WHERE botId = ${botId}
+                       AND fleetId = ${fleetId};`;
+        let result = await this.getConnection().query(query, {type: Sequelize.QueryTypes.SELECT});
+
+        return result[0];
+    }
 }
 
 const botRepositoryInstance = new BotRepository();

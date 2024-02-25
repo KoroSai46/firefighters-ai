@@ -27,3 +27,13 @@ panels.forEach(function (panel) {
 document.addEventListener('selectstart', function (e) {
     e.preventDefault();
 });
+
+
+document.querySelectorAll('#parameters-panel input[data-property]').forEach(function (input) {
+    input.addEventListener('input', function () {
+        const property = input.getAttribute('data-property');
+        const value = input.value;
+
+        socket.emit('parameter:update', {property, value});
+    });
+});

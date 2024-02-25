@@ -63,6 +63,7 @@ const Bots = (function () {
     }
 
     BotsS.prototype.updateBots = function (updatedBots) {
+        console.log(updatedBots);
         updatedBots.forEach(bot => {
             if (this._bots.find(b => b.id === bot.id)) {
                 this._bots.find(b => b.id === bot.id).Coordinates.push(bot.Coordinates[bot.Coordinates.length - 1]);
@@ -108,6 +109,7 @@ const Wildfires = (function () {
 
     WildfiresS.prototype.add = function (wildfire) {
         this._wildfires.push(wildfire);
+        const coordinates = wildfire.Coordinates.map(coordinate => [coordinate.longitude, coordinate.latitude]);
         this._geogson.features.push({
             type: 'Feature',
             geometry: {
@@ -159,7 +161,7 @@ const Wildfires = (function () {
         updatedWildfires.forEach(wildfire => {
             if (this._wildfires.find(w => w.id === wildfire.id)) {
                 this._wildfires.find(w => w.id === wildfire.id).points = wildfire.points;
-                this._geogson.features.find(w => w.properties.id === wildfire.id).geometry.coordinates = this.buildCoordinates(wildfire.Coordinates);
+                this._geogson.features.find(w => w.properties.id === wildfire.id).geometry.coordinates = [wildfire.points];
             } else {
                 this.add(wildfire);
             }
@@ -176,20 +178,8 @@ const Wildfires = (function () {
     }
 
     WildfiresS.prototype.buildCoordinates = function (coordinates) {
-        function polarAngle(point, referencePoint) {
-            return Math.atan2(point[1] - referencePoint[1], point[0] - referencePoint[0]);
-        }
-
-        // Trouver le point de référence (premier point dans la liste)
-        const referencePoint = coordinates[0];
-
-        // Trier les coordonnées en fonction de l'angle polaire par rapport au point de référence
-        const sortedCoordinates = coordinates.sort((a, b) => polarAngle(a, referencePoint) - polarAngle(b, referencePoint));
-
-        // Construire le tableau de coordonnées triées
-        const orderedCoordinates = sortedCoordinates.map(coordinate => [coordinate.longitude, coordinate.latitude]);
-
-        return [orderedCoordinates];
+        //order coordinates clockwise
+        
     }
 
     return {
@@ -216,7 +206,8 @@ const Mapbox = (function () {
     }
 
     MapboxS.prototype._initMap = function () {
-        mapboxgl.accessToken = 'pk.eyJ1IjoieWhhb3VydCIsImEiOiJjbHFjZXRnZXgwMWZxMnFwanh1MnNxMzF3In0.NcuusOQX2gN1qVCYs_304w';
+        mapboxgl.accessToken = mapboxToken;
+        console.log(mapboxToken);
         this._map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
@@ -258,7 +249,6 @@ const Mapbox = (function () {
     MapboxS.prototype.draw = function () {
         return new Promise(async (resolve) => {
             if (!this.layersDrawn) {
-                // await this.addBotsLayer();
                 await this.addWildfiresLayer();
                 this.layersDrawn = true;
             }
@@ -345,25 +335,32 @@ const Mapbox = (function () {
 })();
 
 class Realtime {
-    constructor() {
+    constructor(socket) {
         this._mapbox = Mapbox.getInstance();
+        this.socket = socket;
         this._init();
     }
 
     _init() {
+        const bots = Bots.getInstance();
+        const wildfires = Wildfires.getInstance();
+
+        this.socket.on('bots:update', (data) => {
+            console.log(`Bots - ${Date.now()}`, data);
+            bots.updateBots(data);
+        });
+
+        this.socket.on('fires:update', (data) => {
+            console.log(`Wildfires - ${Date.now()}`, data);
+            wildfires.updateWildfires(data);
+        });
+
+        this.socket.on('bot:unavailable', () => {
+            ToastManager.error('No available bots, create some bots !');
+        });
+
         this._mapbox.onMapReady((mapbox) => {
-            const bots = Bots.getInstance();
-            const wildfires = Wildfires.getInstance();
-
-            const socket = io(BACKEND_URL);
-
-            socket.on('fires:update', (data) => {
-                wildfires.updateWildfires(data.results);
-            });
-
-            socket.on('bots:update', (data) => {
-                bots.updateBots(data.results);
-            });
+            mapbox.draw();
 
             document.addEventListener('wildfires:updated', () => {
                 mapbox.draw();
@@ -376,5 +373,5 @@ class Realtime {
     }
 }
 
-new Realtime();
+new Realtime(socket);
 

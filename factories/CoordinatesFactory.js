@@ -11,7 +11,7 @@ class CoordinatesFactory extends BaseFactory {
         super(Coordinates);
     }
 
-    async createFrenchCoordinates() {
+    async createFrenchCoordinates(withoutSave = false) {
         const turf = require('@turf/turf');
         const franceGeoJSON = this.geojson;
 
@@ -27,6 +27,11 @@ class CoordinatesFactory extends BaseFactory {
             longitude: point.geometry.coordinates[0],
             timestamp: new Date()
         };
+
+        if (withoutSave) {
+            return coordinate;
+        }
+
         return super.create(coordinate);
     }
 }

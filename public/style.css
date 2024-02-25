@@ -114,3 +114,10 @@ main {
     cursor: pointer;
     transition: transform 0.5s !important;
 }
+
+#parameters-panel {
+    top: calc(100vh - 50px - 30vh);
+    left: 50px;
+    width: 300px;
+    height: 10vh;
+}

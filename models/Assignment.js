@@ -16,6 +16,14 @@ const Assignment = sequelize.define('Assignment', {
     endedAt: {
         type: DataTypes.DATE,
         allowNull: true,
+    },
+    geojson: {
+        type: DataTypes.JSON,
+        allowNull: true,
+    },
+    returnGeojson: {
+        type: DataTypes.JSON,
+        allowNull: true,
     }
 }, {
     tableName: 'assignment',
@@ -24,5 +32,15 @@ const Assignment = sequelize.define('Assignment', {
     modelName: 'Assignment',
     dialect: 'mysql',
 });
+
+Assignment.associate = function (models) {
+    Assignment.belongsTo(models.Bot, {
+        foreignKey: 'botId',
+    });
+
+    Assignment.belongsTo(models.Fleet, {
+        foreignKey: 'fleetId',
+    });
+}
 
 module.exports = Assignment;

@@ -1,6 +1,6 @@
 class MapService {
     constructor() {
-        this.apiKey = process.env.MAPBOX_API_KEY;
+        this.apiKey = process.env.MAPBOX_ACCESS_TOKEN;
     }
 
     navigateToLocation(departure, arrival) {
