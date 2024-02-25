@@ -1,3 +1,5 @@
+const {emitUpdateParameter} = require("../sockets/parametersSocket");
+
 class SimulationParametersService {
 
     constructor() {
@@ -50,10 +52,12 @@ class SimulationParametersService {
                     newValue = parseFloat(value);
                     if (!isNaN(newValue)) {
                         this.getInstance()[parameter] = newValue;
+                        emitUpdateParameter({parameter, value: newValue})
                     }
                 } else if (possibleParameter.type === 'string') {
                     newValue = value.toString();
                     this.getInstance()[parameter] = newValue;
+                    emitUpdateParameter({parameter, value: newValue})
                 }
             }
         }

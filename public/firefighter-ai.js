@@ -30,13 +30,15 @@ document.addEventListener('selectstart', function (e) {
 
 
 document.querySelectorAll('#parameters-panel input[data-property]').forEach(function (input) {
-    console.log('input', input);
 
     input.addEventListener('input', function () {
-        console.log('input', input);
         const property = input.getAttribute('data-property');
         const value = input.value;
 
         socket.emit('parameter:update', {property, value});
     });
 });
+
+socket.on('parameter:update', function (parameter) {
+    document.querySelector(`#parameters-panel input[data-property="${parameter.parameter}"]`).value = parameter.value;
+}

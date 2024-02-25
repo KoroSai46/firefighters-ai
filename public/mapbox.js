@@ -445,6 +445,7 @@ class Realtime {
             });
 
             this.socket.on('bots:update', (data) => {
+                console.log('First load', data);
                 if (this.debug) console.log('Received bots update', data);
                 bots.updateBots(data);
             });

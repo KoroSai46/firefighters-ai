@@ -37,7 +37,6 @@ class FireGenerationService {
     }
 
     async generateFire() {
-        console.log('New fire generated');
         const fire = await WildFireFactory.create({'startedAt': new Date()});
 
 
@@ -74,6 +73,8 @@ class FireGenerationService {
             const coordinatesInstance = await CoordinatesFactory.create(coordinate);
             await fireState.addCoordinates(coordinatesInstance);
         }
+
+        this._updatedFires.push(fire);
 
 
         await BotService.createFleet(fire);
@@ -117,11 +118,15 @@ class FireGenerationService {
     async updateFires() {
         await this.refreshFires();
 
+        console.log('Updateing fires', this.firstTimeLoading);
+
         if (this.firstTimeLoading) {
             emitUpdateFires(this._fires);
             this.firstTimeLoading = false;
         } else if (this._updatedFires.length > 0) {
             emitUpdateFires(this._updatedFires);
+
+            this._updatedFires = [];
         }
 
         setTimeout(() => {
@@ -130,4 +135,6 @@ class FireGenerationService {
     }
 }
 
-module.exports = FireGenerationService;
+const fireGenerationServiceInstance = new FireGenerationService();
+
+module.exports = fireGenerationServiceInstance;
