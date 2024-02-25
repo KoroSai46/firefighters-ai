@@ -1,12 +1,17 @@
-const {BotRepository, FleetRepository} = require('../repositories/repositories');
+const {BotRepository, FleetRepository, AssignmentRepository} = require('../repositories/repositories');
 const MapService = require('./MapService');
-const {emitUpdateBots} = require("../sockets/botSocket");
+const {emitUpdateBots, emitUnavailableBot} = require("../sockets/botSocket");
 const {BotFactory, CoordinatesFactory} = require("../factories/factories");
+const TimeManipulationService = require("./SimulationParametersService");
 
 class BotService {
     constructor() {
         this._bots = [];
         this._queries = [];
+        this._botNavigationSteps = [];
+        this._assignments = [];
+        this._updatedBots = [];
+        this.firstTimeLoading = true;
         this.refreshBots().then(() => {
             this.updateBots().then(r => {
             });
@@ -14,28 +19,25 @@ class BotService {
     }
 
     async refreshBots() {
+        this._updatedBots = [];
+        await this.progressAllNavigation();
         let bots = await BotRepository.findAllWithCoordinatesLimit();
         this._bots = bots.results;
         this._queries = bots.queries;
     }
 
     async updateBots() {
-        //get bots
-        for (let i = 0; i < this._bots.length; i++) {
-            let bot = this._bots[i];
-            let botEntity = await BotRepository.findById(bot.id);
-            let newCoordinates = await CoordinatesFactory.createFrenchCoordinates();
-            await botEntity.addCoordinate(newCoordinates);
-        }
-
         await this.refreshBots();
 
+        console.log(this.firstTimeLoading)
 
-        // Émettre la mise à jour
-        emitUpdateBots({
-            results: this._bots,
-            queries: this._queries
-        });
+        if (this.firstTimeLoading) {
+            this.firstTimeLoading = false;
+            emitUpdateBots(this._bots)
+        } else if (this._updatedBots.length > 0) {
+            emitUpdateBots(this._updatedBots);
+        }
+
 
         setTimeout(() => {
             this.updateBots();
@@ -95,20 +97,25 @@ class BotService {
             const bot = botsToSend[i].bot;
             const navigation = botsToSend[i].navigation;
             const duration = botsToSend[i].duration;
-            fleet.addBot(bot);
+            const returnGeojson = {...navigation};
+            returnGeojson.routes[0].legs.steps = returnGeojson.routes[0].legs[0].steps.reverse();
+            const assignment = await AssignmentRepository.create({
+                fleetId: fleet.id,
+                botId: bot.id,
+                startedAt: new Date(),
+                endedAt: null,
+                geojson: navigation,
+                returnGeojson: returnGeojson
+            });
             console.log('Bot ' + bot.id + ' will arrive in ' + duration + ' seconds');
         }
-    }
-
-    async assignBotToFire(bot, fire) {
-
     }
 
 
     async findClosestBotsByCoordinates(toCoordinates, k = 5) {
         let bots = await BotRepository.findAllAvailable();
         if (bots.queries.total === 0) {
-            console.log('No available bots');
+            emitUnavailableBot();
             return [];
         }
         bots = bots.results;
@@ -127,6 +134,75 @@ class BotService {
 
         // Return k closest points
         return distances.slice(0, k).map(entry => entry.bot);
+    }
+
+    async progressAllNavigation() {
+        let availableBots = await BotRepository.findAllAvailable();
+
+        let occupiedBots = this._bots.filter(bot => {
+            return !availableBots.results.some(availableBot => availableBot.id === bot.id);
+        });
+
+        for (let i = 0; i < occupiedBots.length; i++) {
+            let bot = occupiedBots[i];
+
+            if (!this._botNavigationSteps.some(navStep => navStep.botId === bot.id)) {
+                await this.progressNavigation(bot);
+            }
+        }
+    }
+
+    async progressNavigation(bot) {
+        if (!this._updatedBots.some(updatedBot => updatedBot.id === bot.id)) {
+            this._updatedBots.push(bot);
+        }
+        const botId = bot.id;
+        let navStep = this._botNavigationSteps.find(navStep => navStep.botId === botId);
+        if (navStep === undefined) {
+            let geojson = await BotRepository.getLastGeoJson(botId);
+            let steps = geojson.geojson.routes[0].legs[0].steps;
+            this._botNavigationSteps.push({
+                step: 0,
+                subStep: 0,
+                duration: geojson.geojson.routes[0].duration,
+                steps,
+                botId
+            });
+            navStep = this._botNavigationSteps.find(navStep => navStep.botId === botId);
+        }
+
+        //check if the bot has arrived
+        if (navStep.step === navStep.steps.length - 1) {
+            //remove the bot from the occupied list
+            let index = this._botNavigationSteps.findIndex(navStep => navStep.botId === botId);
+            delete this._botNavigationSteps[index];
+            return;
+        }
+        let newCoordinates = navStep.steps[navStep.step].geometry.coordinates;
+
+        //check if substep is defined
+        if (newCoordinates.length <= navStep.subStep) {
+            navStep.step++;
+            navStep.subStep = 0;
+            this.progressNavigation(bot);
+        }
+
+        let realNewCoordinates = newCoordinates[navStep.subStep];
+        let newCoordinatesObject = await CoordinatesFactory.create({
+            latitude: realNewCoordinates[1],
+            longitude: realNewCoordinates[0],
+            timestamp: new Date()
+        });
+        await bot.addCoordinate(newCoordinatesObject);
+        navStep.subStep++;
+
+        let baseTime = navStep.steps[navStep.step].duration / navStep.steps[navStep.step].geometry.coordinates.length;
+
+        let acceleredTime = baseTime / TimeManipulationService.getTimeAcceleration();
+
+        setTimeout(() => {
+            this.progressNavigation(bot);
+        }, acceleredTime * 1000);
     }
 
 }

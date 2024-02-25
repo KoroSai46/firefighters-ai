@@ -63,11 +63,13 @@ const Bots = (function () {
     }
 
     BotsS.prototype.updateBots = function (updatedBots) {
+        console.log(updatedBots)
         updatedBots.forEach(bot => {
             if (this._bots.find(b => b.id === bot.id)) {
                 this._bots.find(b => b.id === bot.id).Coordinates.push(bot.Coordinates[bot.Coordinates.length - 1]);
                 this._geogson.features.find(b => b.properties.id === bot.id).geometry.coordinates = [bot.Coordinates[bot.Coordinates.length - 1].longitude, bot.Coordinates[bot.Coordinates.length - 1].latitude];
             } else {
+                console.log(bot)
                 this.add(bot);
             }
         });
@@ -160,6 +162,7 @@ const Wildfires = (function () {
                 this._wildfires.find(w => w.id === wildfire.id).points = wildfire.points;
                 this._geogson.features.find(w => w.properties.id === wildfire.id).geometry.coordinates = [wildfire.points];
             } else {
+                console.log(wildfire);
                 this.add(wildfire);
             }
         });
@@ -327,7 +330,7 @@ const Mapbox = (function () {
     }
 
     MapboxS.prototype.follow = function (botId) {
-        function followMarker () {
+        function followMarker() {
             let marker = Bots.getInstance()._botsMarkers.find(marker => marker.id === botId);
             this.flyTo(marker.marker.getLngLat().lng, marker.marker.getLngLat().lat);
         }
@@ -354,8 +357,78 @@ const Mapbox = (function () {
     };
 })();
 
+class WildfireManager {
+    constructor(wildfire) {
+        this._wildfire = wildfire;
+        this._init();
+    }
+
+    _init() {
+        // Mapbox.getInstance().getMap().getSource('wildfire-layer').addSource(`wildfire-source-${this._wildfire.id}`, {
+        //     type: 'geojson',
+        //     data: {
+        //         type: 'Feature',
+        //         geometry: {
+        //             type: 'Polygon',
+        //             coordinates: [],
+        //         },
+        //     },
+        // });
+    }
+
+    addState(state) {
+        // Mapbox.getInstance().getMap().getSource(`wildfire-source-${this._wildfire.id}`).setData({
+        //     type: 'Feature',
+        //     geometry: {
+        //         type: 'Polygon',
+        //         coordinates: [state.points],
+        //     },
+        // });
+    }
+}
+
+class BotManager {
+    constructor(bot) {
+        this._bot = bot;
+        this._init();
+    }
+
+    _init() {
+        //add bot to geojson feature collection from BotsS
+        Bots.getInstance()._geogson.features.push({
+            type: 'Feature',
+            geometry: {
+                type: 'Point',
+                coordinates: [this._bot.Coordinates[this._bot.Coordinates.length - 1].longitude, this._bot.Coordinates[this._bot.Coordinates.length - 1].latitude],
+            },
+            properties: {
+                title: 'Bot',
+                description: 'Bot',
+                id: this._bot.id,
+            },
+        });
+
+        //update source
+        Mapbox.getInstance().drawMarkers();
+    }
+}
+
+class ToastManager {
+    static error(message) {
+        Toastify({
+            text: message,
+            duration: 3000,
+            close: true,
+            gravity: 'top',
+            position: 'right',
+            backgroundColor: 'linear-gradient(to right, #ff416c, #ff4b2b)',
+        }).showToast();
+    }
+}
+
 class Realtime {
-    constructor() {
+    constructor(socket) {
+        this.socket = socket;
         this._mapbox = Mapbox.getInstance();
         this.debug = false;
         this._init();
@@ -366,16 +439,14 @@ class Realtime {
             const bots = Bots.getInstance();
             const wildfires = Wildfires.getInstance();
 
-            const socket = io(BACKEND_URL);
-
-            socket.on('fires:update', (data) => {
-                if (this.debug) console.log('Received wildfires update', data.results);
-                wildfires.updateWildfires(data.results);
+            this.socket.on('fires:update', (data) => {
+                if (this.debug) console.log('Received wildfires update', data);
+                wildfires.updateWildfires(data);
             });
 
-            socket.on('bots:update', (data) => {
-                if (this.debug) console.log('Received bots update', data.results);
-                bots.updateBots(data.results);
+            this.socket.on('bots:update', (data) => {
+                if (this.debug) console.log('Received bots update', data);
+                bots.updateBots(data);
             });
 
             document.addEventListener('wildfires:updated', () => {
@@ -383,13 +454,12 @@ class Realtime {
                 mapbox.draw();
             });
 
-            document.addEventListener('bots:updated', () => {
-                if (this.debug) console.log('Bots updated');
-                mapbox.draw();
+            this.socket.on('bot:unavailable', () => {
+                ToastManager.error('No available bots, create some bots !');
             });
         });
     }
 }
 
-new Realtime();
+new Realtime(socket);
 

@@ -228,6 +228,12 @@ module.exports = {
         });
 
         await queryInterface.createTable('assignment', {
+            id: {
+                type: Sequelize.INTEGER,
+                primaryKey: true,
+                autoIncrement: true,
+                allowNull: false
+            },
             fleetId: {
                 type: Sequelize.INTEGER,
                 primaryKey: true,
@@ -249,6 +255,14 @@ module.exports = {
                 },
                 onUpdate: 'cascade',
                 onDelete: 'cascade'
+            },
+            geojson: {
+                type: Sequelize.JSON,
+                allowNull: true,
+            },
+            returnGeojson: {
+                type: Sequelize.JSON,
+                allowNull: true
             },
             createdAt: Sequelize.DATE,
             updatedAt: Sequelize.DATE,

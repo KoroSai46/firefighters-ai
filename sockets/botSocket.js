@@ -6,7 +6,13 @@ function emitUpdateBots(bots) {
     io.emit(Events.BOTS_UPDATE, bots);
 }
 
+function emitUnavailableBot() {
+    const io = socket.getIO();
+    io.emit(Events.BOT_UNAVAILABLE);
+}
+
 
 module.exports = {
-    emitUpdateBots
+    emitUpdateBots,
+    emitUnavailableBot
 }
