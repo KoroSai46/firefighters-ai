@@ -13,7 +13,7 @@ function emitNewWildFireState(wildFireState) {
 
 function emitUpdateFires(fires) {
     const io = socket.getIO();
-    console.log('fire emit', io.emit(Events.FIRES_UPDATE, fires));
+    io.emit(Events.FIRES_UPDATE, fires);
 }
 
 

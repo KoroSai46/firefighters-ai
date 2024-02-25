@@ -3,39 +3,50 @@ const events = require('./events');
 const SimulationParametersService = require("../services/SimulationParametersService");
 const TestService = require("../services/test");
 
-let io;
+class Socket {
+    constructor() {
+        this.io = null;
+    }
 
-function initSocket(server) {
-    io = socketIO(server, {
-        cors: {
-            origin: '*',
-        }
-    });
-    io.on('connection', (socket) => {
-        console.log('A user connected');
-        TestService.test();
-
-        socket.on(events.PARAMETER_UPDATE, (data) => {
-            //check if data has property and value
-            if (data.property && data.value) {
-                SimulationParametersService.setParameter({parameter: data.property, value: data.value});
+    initSocket(server) {
+        this.io = socketIO(server, {
+            cors: {
+                origin: '*',
             }
         });
 
-        socket.on('disconnect', () => {
-            console.log('A user disconnected');
+        this.io.on('connection', (socket) => {
+            console.log('A user connected');
+            TestService.test();
+
+            socket.on(events.PARAMETER_UPDATE, (data) => {
+                //check if data has property and value
+                if (data.property && data.value) {
+                    if (SimulationParametersService.setParameter({
+                        parameter: data.property,
+                        value: data.value
+                    }) !== null) {
+                        //emit to all connected clients
+                        this.io.emit(events.PARAMETER_UPDATE, data);
+                    }
+                }
+            });
+
+            socket.on('disconnect', () => {
+                console.log('A user disconnected');
+            });
         });
-    });
-}
-
-function getIO() {
-    if (!io) {
-        throw new Error('Socket.io not initialized');
     }
-    return io;
+
+    getIO() {
+        if (!this.io) {
+            throw new Error('Socket.io not initialized');
+        }
+        return this.io;
+    }
+
 }
 
-module.exports = {
-    initSocket,
-    getIO
-}
+const socketInstance = new Socket();
+
+module.exports = socketInstance;
