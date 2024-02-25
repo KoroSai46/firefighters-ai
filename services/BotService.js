@@ -84,6 +84,7 @@ class BotService {
         for (let i = 0; i < closestBots.length; i++) {
             let botCoordinates = await closestBots[i].getCoordinates();
             let navigation = await MapService.navigateToLocation(botCoordinates[0], coordinates[0]);
+            console.log(navigation);
             let duration = navigation.routes[0].duration;
 
             durations.push({bot: closestBots[i], duration, navigation});

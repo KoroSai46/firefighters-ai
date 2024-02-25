@@ -30,7 +30,6 @@ document.addEventListener('selectstart', function (e) {
 
 
 document.querySelectorAll('#parameters-panel input[data-property]').forEach(function (input) {
-
     input.addEventListener('input', function () {
         const property = input.getAttribute('data-property');
         const value = input.value;

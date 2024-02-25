@@ -45,7 +45,7 @@ const Bots = (function () {
         clone.dataset.id = bot.id;
         clone.querySelector('.panel-bot-id').textContent = bot.id;
         clone.addEventListener('click', () => {
-            Mapbox.getInstance().follow(bot.id);
+            Mapbox.getInstance().flyTo(bot.Coordinates[bot.Coordinates.length - 1].longitude, bot.Coordinates[bot.Coordinates.length - 1].latitude);
             console.log(bot);
         });
         this._body.appendChild(clone);
@@ -63,13 +63,12 @@ const Bots = (function () {
     }
 
     BotsS.prototype.updateBots = function (updatedBots) {
-        console.log(updatedBots)
+        console.log(updatedBots);
         updatedBots.forEach(bot => {
             if (this._bots.find(b => b.id === bot.id)) {
                 this._bots.find(b => b.id === bot.id).Coordinates.push(bot.Coordinates[bot.Coordinates.length - 1]);
                 this._geogson.features.find(b => b.properties.id === bot.id).geometry.coordinates = [bot.Coordinates[bot.Coordinates.length - 1].longitude, bot.Coordinates[bot.Coordinates.length - 1].latitude];
             } else {
-                console.log(bot)
                 this.add(bot);
             }
         });
@@ -110,11 +109,12 @@ const Wildfires = (function () {
 
     WildfiresS.prototype.add = function (wildfire) {
         this._wildfires.push(wildfire);
+        const coordinates = wildfire.Coordinates.map(coordinate => [coordinate.longitude, coordinate.latitude]);
         this._geogson.features.push({
             type: 'Feature',
             geometry: {
                 type: 'Polygon',
-                coordinates: [wildfire.points],
+                coordinates: this.buildCoordinates(wildfire.Coordinates),
             },
             properties: {
                 title: 'Wildfire',
@@ -140,6 +140,7 @@ const Wildfires = (function () {
         clone.dataset.id = wildfire.id;
         clone.querySelector('.panel-wildfire-id').textContent = wildfire.id;
         clone.addEventListener('click', () => {
+            Mapbox.getInstance().flyTo(wildfire.Coordinates[0].longitude, wildfire.Coordinates[0].latitude);
             console.log(wildfire);
         });
         this._body.appendChild(clone);
@@ -162,7 +163,6 @@ const Wildfires = (function () {
                 this._wildfires.find(w => w.id === wildfire.id).points = wildfire.points;
                 this._geogson.features.find(w => w.properties.id === wildfire.id).geometry.coordinates = [wildfire.points];
             } else {
-                console.log(wildfire);
                 this.add(wildfire);
             }
         });
@@ -175,6 +175,11 @@ const Wildfires = (function () {
 
         const event = new CustomEvent('wildfires:updated', {detail: 'Wildfires updated'});
         document.dispatchEvent(event);
+    }
+
+    WildfiresS.prototype.buildCoordinates = function (coordinates) {
+        //order coordinates clockwise
+        
     }
 
     return {
@@ -201,7 +206,8 @@ const Mapbox = (function () {
     }
 
     MapboxS.prototype._initMap = function () {
-        mapboxgl.accessToken = 'pk.eyJ1IjoieWhhb3VydCIsImEiOiJjbHFjZXRnZXgwMWZxMnFwanh1MnNxMzF3In0.NcuusOQX2gN1qVCYs_304w';
+        mapboxgl.accessToken = mapboxToken;
+        console.log(mapboxToken);
         this._map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
@@ -243,12 +249,12 @@ const Mapbox = (function () {
     MapboxS.prototype.draw = function () {
         return new Promise(async (resolve) => {
             if (!this.layersDrawn) {
-                // await this.addBotsLayer();
                 await this.addWildfiresLayer();
                 this.layersDrawn = true;
             }
 
-            await this.drawMarkers();
+            await this.drawBots();
+            await this.drawWildfires();
             resolve();
         });
     }
@@ -278,31 +284,7 @@ const Mapbox = (function () {
         });
     }
 
-    // MapboxS.prototype.addBotsLayer = function () {
-    //     return new Promise((resolve) => {
-    //         this._map.addSource('bots-source', {
-    //             type: 'geojson',
-    //             data: {
-    //                 type: 'FeatureCollection',
-    //                 features: []
-    //             },
-    //         });
-    //
-    //         this._map.addLayer({
-    //             id: 'bots-layer',
-    //             type: 'symbol',
-    //             layout: {
-    //                 'icon-image': 'bot-marker',
-    //                 'icon-size': 0.02,
-    //             },
-    //             source: 'bots-source',
-    //         });
-    //
-    //         resolve();
-    //     });
-    // }
-
-    MapboxS.prototype.drawMarkers = function () {
+    MapboxS.prototype.drawBots = function () {
         let botsGeojson = Bots.getInstance()._geogson;
         for (const bot of botsGeojson.features) {
             let botMarker = Bots.getInstance()._botsMarkers.find(marker => marker.id === bot.properties.id);
@@ -329,13 +311,8 @@ const Mapbox = (function () {
         }
     }
 
-    MapboxS.prototype.follow = function (botId) {
-        function followMarker() {
-            let marker = Bots.getInstance()._botsMarkers.find(marker => marker.id === botId);
-            this.flyTo(marker.marker.getLngLat().lng, marker.marker.getLngLat().lat);
-        }
-
-        requestAnimationFrame(followMarker);
+    MapboxS.prototype.drawWildfires = function () {
+        this._map.getSource('wildfires-source').setData(Wildfires.getInstance()._geogson);
     }
 
     MapboxS.prototype.flyTo = function (longitude, latitude, zoom = 14) {
@@ -357,106 +334,40 @@ const Mapbox = (function () {
     };
 })();
 
-class WildfireManager {
-    constructor(wildfire) {
-        this._wildfire = wildfire;
-        this._init();
-    }
-
-    _init() {
-        // Mapbox.getInstance().getMap().getSource('wildfire-layer').addSource(`wildfire-source-${this._wildfire.id}`, {
-        //     type: 'geojson',
-        //     data: {
-        //         type: 'Feature',
-        //         geometry: {
-        //             type: 'Polygon',
-        //             coordinates: [],
-        //         },
-        //     },
-        // });
-    }
-
-    addState(state) {
-        // Mapbox.getInstance().getMap().getSource(`wildfire-source-${this._wildfire.id}`).setData({
-        //     type: 'Feature',
-        //     geometry: {
-        //         type: 'Polygon',
-        //         coordinates: [state.points],
-        //     },
-        // });
-    }
-}
-
-class BotManager {
-    constructor(bot) {
-        this._bot = bot;
-        this._init();
-    }
-
-    _init() {
-        //add bot to geojson feature collection from BotsS
-        Bots.getInstance()._geogson.features.push({
-            type: 'Feature',
-            geometry: {
-                type: 'Point',
-                coordinates: [this._bot.Coordinates[this._bot.Coordinates.length - 1].longitude, this._bot.Coordinates[this._bot.Coordinates.length - 1].latitude],
-            },
-            properties: {
-                title: 'Bot',
-                description: 'Bot',
-                id: this._bot.id,
-            },
-        });
-
-        //update source
-        Mapbox.getInstance().drawMarkers();
-    }
-}
-
-class ToastManager {
-    static error(message) {
-        Toastify({
-            text: message,
-            duration: 3000,
-            close: true,
-            gravity: 'top',
-            position: 'right',
-            backgroundColor: 'linear-gradient(to right, #ff416c, #ff4b2b)',
-        }).showToast();
-    }
-}
-
 class Realtime {
     constructor(socket) {
-        this.socket = socket;
         this._mapbox = Mapbox.getInstance();
-        this.debug = false;
+        this.socket = socket;
         this._init();
     }
 
     _init() {
+        const bots = Bots.getInstance();
+        const wildfires = Wildfires.getInstance();
+
+        this.socket.on('bots:update', (data) => {
+            console.log(`Bots - ${Date.now()}`, data);
+            bots.updateBots(data);
+        });
+
+        this.socket.on('fires:update', (data) => {
+            console.log(`Wildfires - ${Date.now()}`, data);
+            wildfires.updateWildfires(data);
+        });
+
+        this.socket.on('bot:unavailable', () => {
+            ToastManager.error('No available bots, create some bots !');
+        });
+
         this._mapbox.onMapReady((mapbox) => {
-            const bots = Bots.getInstance();
-            const wildfires = Wildfires.getInstance();
-
-            this.socket.on('fires:update', (data) => {
-                if (this.debug) console.log('Received wildfires update', data);
-                wildfires.updateWildfires(data);
-            });
-
-            this.socket.on('bots:update', (data) => {
-                console.log('First load', data);
-                if (this.debug) console.log('Received bots update', data);
-                bots.updateBots(data);
-            });
+            mapbox.draw();
 
             document.addEventListener('wildfires:updated', () => {
-                if (this.debug) console.log('Wildfires updated');
                 mapbox.draw();
             });
 
-            this.socket.on('bot:unavailable', () => {
-                ToastManager.error('No available bots, create some bots !');
+            document.addEventListener('bots:updated', () => {
+                mapbox.draw();
             });
         });
     }

@@ -3,9 +3,9 @@
 <head>
     <meta charset="utf-8"/>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
     <title>Firefighters-ai</title>
 
+    <!-- Custom -->
     <link rel="stylesheet" type="text/css" href="style.css">
 
     <!-- Mapbox -->
@@ -29,7 +29,7 @@
         </div>
         <div id="template-panel-bot" class="panel-bot hidden" data-id="">
             <img src="images/markers/bot.png" alt="bot" class="panel-marker">
-            <div class="panel-bot-id text-sm">#01AKL51</div>
+            <div class="panel-bot-id text-sm"></div>
         </div>
         <div class="panel-body">
         </div>
@@ -44,7 +44,7 @@
         </div>
         <div id="template-panel-wildfire" class="panel-wildfire hidden" data-id="">
             <img src="images/markers/wildfire.png" alt="bot" class="panel-marker">
-            <div class="panel-wildfire-id text-sm">#01AKL51</div>
+            <div class="panel-wildfire-id text-sm"></div>
         </div>
         <div class="panel-body">
         </div>
@@ -68,12 +68,12 @@
     </div>
 </main>
 <script defer>
-    const BACKEND_URL = '<%= backendUrl %>';
-    const socket = io(BACKEND_URL);
+    const socket = io('<%= backendUrl %>');
+    const mapboxToken = '<%= mapboxAccessToken %>';
 </script>
-<script src="firefighter-ai.js" defer></script>
-<script src="mapbox.js" defer></script>
+<script type="text/javascript" src="firefighter-ai.js" defer></script>
+<script type="text/javascript" src="mapbox.js" defer></script>
+<script type="text/javascript" src="toastify.min.js" defer></script>
 <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
-<script type="text/javascript" src="toastify.min.js"></script>
 </body>
 </html>
