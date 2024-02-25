@@ -1,4 +1,5 @@
 const {emitUpdateParameter} = require("../sockets/parametersSocket");
+const TestService = require('./test');
 
 class SimulationParametersService {
 
@@ -45,6 +46,7 @@ class SimulationParametersService {
             // check if the value is of the right type
             if (typeof value === possibleParameter.type) {
                 this.getInstance()[parameter] = value;
+                return value;
             } else {
                 let newValue;
                 //try to convert the value to the right type
@@ -52,12 +54,14 @@ class SimulationParametersService {
                     newValue = parseFloat(value);
                     if (!isNaN(newValue)) {
                         this.getInstance()[parameter] = newValue;
-                        emitUpdateParameter({parameter, value: newValue})
+                        return newValue;
+                    } else {
+                        return null;
                     }
                 } else if (possibleParameter.type === 'string') {
                     newValue = value.toString();
                     this.getInstance()[parameter] = newValue;
-                    emitUpdateParameter({parameter, value: newValue})
+                    return newValue;
                 }
             }
         }
