@@ -1,4 +1,5 @@
 const router = require('express').Router();
+const SimulationService = require('./services/SimulationParametersService');
 const {BotRepository, FireStationRepository, WildFireRepository} = require('./repositories/repositories');
 const wrapper = require('./http/wrapper');
 const MapService = require("./services/MapService");
@@ -6,7 +7,11 @@ const MapService = require("./services/MapService");
 router.get('/map', (req, res) => {
     res.render('map.ejs', {
         backendUrl: process.env.BACKEND_URL,
-        mapboxAccessToken: process.env.MAPBOX_API_KEY
+        mapboxAccessToken: process.env.MAPBOX_ACCESS_TOKEN,
+        parameters: {
+            timeAcceleration: SimulationService.getTimeAcceleration(),
+            fireChance: SimulationService.getFireChance()
+        }
     });
 });
 

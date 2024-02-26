@@ -92,6 +92,10 @@
 <script defer>
     const socket = io('<%= backendUrl %>');
     const mapboxToken = '<%= mapboxAccessToken %>';
+    const defaultParameters = {
+        timeAcceleration: <%= parameters.timeAcceleration %>,
+        fireChance: <%= parameters.fireChance %>,
+    };
 </script>
 <script type="text/javascript" src="firefighter-ai.js" defer></script>
 <script type="text/javascript" src="mapbox.js" defer></script>

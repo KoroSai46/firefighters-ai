@@ -1,6 +1,10 @@
 const panels = document.querySelectorAll('.panel');
 let currentlyDragged = null;
 
+console.log(defaultParameters);
+document.getElementById('timeAcceleration').value = defaultParameters.timeAcceleration;
+document.getElementById('fireChance').value = defaultParameters.fireChance;
+
 panels.forEach(function (panel) {
     const drag = panel.querySelector('.drag');
 

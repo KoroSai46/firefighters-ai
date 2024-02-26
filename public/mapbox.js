@@ -405,7 +405,7 @@ class Realtime {
 
         this.socket.on('fire:end', (data) => {
             console.log(`Fire end - ${Date.now()}`, data);
-            wildfires.remove(data.id);
+            wildfires.remove(data);
         });
 
         this.socket.on('bot:unavailable', () => {
