@@ -6,7 +6,7 @@ const MapService = require("./services/MapService");
 router.get('/map', (req, res) => {
     res.render('map.ejs', {
         backendUrl: process.env.BACKEND_URL,
-        mapboxAccessToken: process.env.MAPBOX_ACCESS_TOKEN
+        mapboxAccessToken: process.env.MAPBOX_API_KEY
     });
 });
 

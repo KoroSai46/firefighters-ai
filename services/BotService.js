@@ -1,8 +1,14 @@
-const {BotRepository, FleetRepository, AssignmentRepository} = require('../repositories/repositories');
+const {
+    BotRepository,
+    FleetRepository,
+    AssignmentRepository,
+    WildFireRepository
+} = require('../repositories/repositories');
 const MapService = require('./MapService');
 const {emitUpdateBots, emitUnavailableBot} = require("../sockets/botSocket");
 const {BotFactory, CoordinatesFactory} = require("../factories/factories");
 const TimeManipulationService = require("./SimulationParametersService");
+const {emitFinishedWildFire} = require("../sockets/wildFireSocket");
 
 class BotService {
     constructor() {
@@ -12,15 +18,14 @@ class BotService {
         this._assignments = [];
         this._updatedBots = [];
         this.firstTimeLoading = true;
-        this.refreshBots().then(() => {
-            this.updateBots().then(r => {
-            });
-        });
+        this.updateBots();
+        this.reAssignBot();
     }
 
     async refreshBots() {
         this._updatedBots = [];
         await this.progressAllNavigation();
+
         let bots = await BotRepository.findAllWithCoordinatesLimit();
         this._bots = bots.results;
         this._queries = bots.queries;
@@ -28,8 +33,6 @@ class BotService {
 
     async updateBots() {
         await this.refreshBots();
-
-        console.log(this.firstTimeLoading)
 
         if (this.firstTimeLoading) {
             this.firstTimeLoading = false;
@@ -66,6 +69,8 @@ class BotService {
     }
 
     async createFleet(wildFire) {
+        wildFire = await WildFireRepository.findById(wildFire.id);
+
         const wildFireStates = await wildFire.getWildFireStates();
         const firestate = await wildFireStates[0];
 
@@ -84,7 +89,6 @@ class BotService {
         for (let i = 0; i < closestBots.length; i++) {
             let botCoordinates = await closestBots[i].getCoordinates();
             let navigation = await MapService.navigateToLocation(botCoordinates[0], coordinates[0]);
-            console.log(navigation);
             let duration = navigation.routes[0].duration;
 
             durations.push({bot: closestBots[i], duration, navigation});
@@ -148,23 +152,56 @@ class BotService {
             let bot = occupiedBots[i];
 
             if (!this._botNavigationSteps.some(navStep => navStep.botId === bot.id)) {
-                await this.progressNavigation(bot);
+                this.progressNavigation(bot);
             }
         }
     }
 
     async progressNavigation(bot) {
         if (!this._updatedBots.some(updatedBot => updatedBot.id === bot.id)) {
-            this._updatedBots.push(bot);
+            let botTest = this._bots.find(botToTest => botToTest.id === bot.id);
+            this._updatedBots.push(botTest);
         }
         const botId = bot.id;
         let navStep = this._botNavigationSteps.find(navStep => navStep?.botId === botId);
         if (navStep === undefined) {
             let geojson = await BotRepository.getLastGeoJson(botId);
+            if (geojson === null) {
+                console.log('no active assignment for bot ' + botId);
+                return;
+            }
             let steps = geojson.geojson.routes[0].legs[0].steps;
+            let step = 0;
+            let subStep = 0;
+
+
+            //check if the bot already started the navigation
+            if (bot.dataValues.Coordinates.length === 0) {
+                let lastCoordinate = bot.dataValues.Coordinates[0];
+
+                //find in geojson the closest point to the last coordinate
+                let minDistance = 1000000;
+                let closestStep = 0;
+                let closestSubStep = 0;
+                for (let i = 0; i < steps.length; i++) {
+                    let coordinates = steps[i].geometry.coordinates;
+                    for (let j = 0; j < coordinates.length; j++) {
+                        let distance = this.haversineDistance(lastCoordinate, {
+                            latitude: coordinates[j][1],
+                            longitude: coordinates[j][0]
+                        });
+                        if (distance < minDistance) {
+                            minDistance = distance;
+                            closestStep = i;
+                            closestSubStep = j;
+                        }
+                    }
+                }
+            }
+
             this._botNavigationSteps.push({
-                step: 0,
-                subStep: 0,
+                step,
+                subStep,
                 duration: geojson.geojson.routes[0].duration,
                 steps,
                 botId
@@ -174,9 +211,12 @@ class BotService {
 
         //check if the bot has arrived
         if (navStep.step === navStep.steps.length - 1) {
-            //remove the bot from the occupied list
-            let index = this._botNavigationSteps.findIndex(navStep => navStep?.botId === botId);
-            delete this._botNavigationSteps[index];
+            console.log("FIRE FINISHED");
+            let botId = navStep.botId;
+            let index = this._botNavigationSteps.findIndex(navStep => navStep.botId === botId);
+            this._botNavigationSteps.splice(index, 1);
+
+            await this.finishFire(botId);
             return;
         }
         let newCoordinates = navStep.steps[navStep.step].geometry.coordinates;
@@ -185,7 +225,7 @@ class BotService {
         if (newCoordinates.length <= navStep.subStep) {
             navStep.step++;
             navStep.subStep = 0;
-            this.progressNavigation(bot);
+            newCoordinates = navStep.steps[navStep.step].geometry.coordinates;
         }
 
         let realNewCoordinates = newCoordinates[navStep.subStep];
@@ -204,6 +244,35 @@ class BotService {
         setTimeout(() => {
             this.progressNavigation(bot);
         }, acceleredTime * 1000);
+    }
+
+    async finishFire(botId) {
+        const fireId = await AssignmentRepository.findFireByBotId(botId);
+
+        console.log('Fire finished: ' + fireId);
+
+        await WildFireRepository.finishWildFire(fireId);
+
+        emitFinishedWildFire(fireId);
+
+        await this.reAssignBot();
+    }
+
+    async reAssignBot() {
+        let availableBots = await BotRepository.findAllAvailable();
+
+        if (availableBots.results.length === 0) {
+            return;
+        }
+        for (let i = 0; i < availableBots.results.length; i++) {
+            let activeFire = await WildFireRepository.findSingleActiveWildFire();
+
+            if (activeFire.length === 0) {
+                return;
+            }
+
+            await this.createFleet(activeFire[0]);
+        }
     }
 
 }

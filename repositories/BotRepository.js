@@ -12,13 +12,13 @@ class BotRepository extends BaseRepository {
         //table assignment have botId and a endedAt field, we can select all bots from bot table
         // where botId is not in the table assignment or where endedAt is null
 
-        //get unavailable bots
+        //get available bots
         let availableBots = await helpers.findAllGeneric(Bot, req, {
             [Sequelize.Op.or]: [
                 // Use Sequelize's not in operator $notIn to find botIds not present in assignment table
                 {id: {[Sequelize.Op.notIn]: Sequelize.literal('(SELECT botId FROM assignment WHERE endedAt IS NULL)')}},
             ],
-        });
+        }, {withAssoc: false, noLimit: true});
 
         return availableBots;
     }
@@ -50,10 +50,15 @@ class BotRepository extends BaseRepository {
         let fleetQuery = `SELECT fleetId
                           FROM assignment
                           WHERE botId = ${botId}
+                            AND endedAt IS NULL
                           ORDER BY createdAt DESC
                           LIMIT 1;`;
 
         let fleetResult = await this.getConnection().query(fleetQuery, {type: Sequelize.QueryTypes.SELECT});
+
+        if (fleetResult.length === 0) {
+            return null;
+        }
 
         let fleetId = fleetResult[0].fleetId;
 

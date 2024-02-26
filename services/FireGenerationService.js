@@ -118,8 +118,6 @@ class FireGenerationService {
     async updateFires() {
         await this.refreshFires();
 
-        console.log('Updateing fires', this.firstTimeLoading);
-
         if (this.firstTimeLoading) {
             emitUpdateFires(this._fires);
             this.firstTimeLoading = false;
