@@ -132,6 +132,7 @@ main {
     top: calc(100vh - 20vh);
     left: 50px;
     width: 300px;
+    min-height: 10vh;
 }
 
 .input-row {
@@ -173,4 +174,12 @@ main {
 
 .modal-close {
     cursor: pointer;
+}
+
+input[data-property] {
+    width: 90%;
+    padding: 5px;
+    margin-bottom: 10px;
+    border: 1px solid var(--grey);
+    border-radius: 5px;
 }

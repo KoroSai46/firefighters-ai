@@ -4,7 +4,7 @@ const {BotRepository, FireStationRepository, WildFireRepository} = require('./re
 const wrapper = require('./http/wrapper');
 const MapService = require("./services/MapService");
 
-router.get('/map', (req, res) => {
+router.get('/', (req, res) => {
     res.render('map.ejs', {
         backendUrl: process.env.BACKEND_URL,
         mapboxAccessToken: process.env.MAPBOX_ACCESS_TOKEN,
