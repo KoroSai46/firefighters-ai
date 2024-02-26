@@ -1,7 +1,7 @@
 {
   "development": {
     "username": "root",
-    "password": "Cobrakai46Mysql!",
+    "password": "root",
     "database": "firefighter_ai",
     "host": "127.0.0.1",
     "dialect": "mysql"

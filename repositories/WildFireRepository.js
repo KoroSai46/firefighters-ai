@@ -28,6 +28,30 @@ class WildFireRepository extends BaseRepository {
             queries: firesQuery.queries,
         }
     }
+
+    async finishWildFire(wildFireId) {
+        //find fleet and assignements to end them
+        let query = `UPDATE assignment
+                     SET endedAt = NOW()
+                     WHERE fleetId = (SELECT id FROM fleet WHERE wildFireId = ${wildFireId} AND endedAt IS NULL)
+                       AND endedAt IS NULL;`;
+        await this.getConnection().query(query, {type: this.getConnection().QueryTypes.UPDATE});
+
+        return await WildFire.update({
+            endedAt: new Date()
+        }, {
+            where: {
+                id: wildFireId
+            }
+        });
+    }
+
+    async findSingleActiveWildFire() {
+        //we need to be sure that there is no fleet assigned to this wildfire
+        let query = 'SELECT * FROM wildfire WHERE endedAt IS NULL AND id NOT IN (SELECT wildFireId FROM fleet)';
+
+        return await this.getConnection().query(query, {type: this.getConnection().QueryTypes.SELECT});
+    }
 }
 
 const wildFireRepositoryInstance = new WildFireRepository();

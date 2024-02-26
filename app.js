@@ -15,6 +15,7 @@ const wrapper = require('./http/wrapper');
 const {emitNewWildFire} = require('./sockets/wildFireSocket');
 
 const FireGenerationService = require('./services/FireGenerationService');
+const BotService = require('./services/BotService');
 
 const router = require('./routes');
 
