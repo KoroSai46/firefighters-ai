@@ -45,7 +45,7 @@ main {
     background-color: white;
     border: 1px solid var(--grey);
     border-radius: 10px;
-    z-index: 9999;
+    z-index: 9998;
     padding: 10px;
 }
 
@@ -86,6 +86,19 @@ main {
     background-color: var(--grey);
 }
 
+.panel-actions {
+    display: flex;
+    flex-direction: row;
+    padding-right: 10px;
+    width: 100%;
+    justify-content: flex-end;
+}
+
+.panel-action {
+    height: 16px;
+    width: 16px;
+}
+
 .panel-marker {
     width: 24px;
     height: 24px;
@@ -116,8 +129,48 @@ main {
 }
 
 #parameters-panel {
-    top: calc(100vh - 50px - 30vh);
+    top: calc(100vh - 20vh);
     left: 50px;
     width: 300px;
-    height: 10vh;
+}
+
+.input-row {
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.input {
+    display: flex;
+    border-radius: 5px;
+    border: 1px solid var(--grey);
+    padding: 5px;
+}
+
+.input:focus {
+    outline: none;
+    border: 1px solid #a0a0a0;
+}
+
+.mb-1 {
+    margin-bottom: 5px;
+}
+
+.modal {
+    display: none;
+    position: fixed;
+    left: 0;
+    top: 0;
+    background-color: white;
+    border: 1px solid var(--grey);
+    border-radius: 10px;
+    z-index: 9999;
+    padding: 10px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.modal-close {
+    cursor: pointer;
 }

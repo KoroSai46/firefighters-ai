@@ -1,3 +1,21 @@
+function openDetailModal(object, clientX, clientY) {
+    let modal = document.getElementById('detail-modal');
+    let slot = document.getElementById('slot');
+
+    let formatter = new JSONFormatter(object);
+
+    slot.innerHTML = '';
+    slot.appendChild(formatter.render());
+    modal.style.display = 'block';
+
+    let windowWidth = window.innerWidth || document.documentElement.clientWidth || document.body.clientWidth;
+    let modalWidth = modal.offsetWidth;
+    let adjustedLeft = Math.min(clientX, windowWidth - modalWidth - 100);
+
+    modal.style.left = `${adjustedLeft}px`;
+    modal.style.top = `${clientY}px`;
+}
+
 const Bots = (function () {
     let instance;
 
@@ -28,7 +46,6 @@ const Bots = (function () {
             },
         });
 
-        // Add bot to panel
         this.addToPanel(bot);
     }
 
@@ -36,6 +53,8 @@ const Bots = (function () {
         this.removeFromPanel(id);
         this._bots = this._bots.filter(bot => bot.id !== id);
         this._geogson.features = this._geogson.features.filter(bot => bot.properties.id !== id);
+
+        this.callDraw();
     }
 
     BotsS.prototype.addToPanel = function (bot) {
@@ -44,10 +63,13 @@ const Bots = (function () {
         clone.id = '';
         clone.dataset.id = bot.id;
         clone.querySelector('.panel-bot-id').textContent = bot.id;
-        clone.addEventListener('click', () => {
-            Mapbox.getInstance().flyTo(bot.Coordinates[bot.Coordinates.length - 1].longitude, bot.Coordinates[bot.Coordinates.length - 1].latitude);
-            console.log(bot);
+        clone.addEventListener('click', (e) => {
+            openDetailModal(bot, e.clientX, e.clientY);
         });
+        clone.querySelector('.fly-to').addEventListener('click', (e) => {
+            e.stopPropagation();
+            Mapbox.getInstance().flyTo(bot.Coordinates[bot.Coordinates.length - 1].longitude, bot.Coordinates[bot.Coordinates.length - 1].latitude);
+        })
         this._body.appendChild(clone);
     };
 
@@ -63,11 +85,10 @@ const Bots = (function () {
     }
 
     BotsS.prototype.updateBots = function (updatedBots) {
-        console.log(updatedBots);
         updatedBots.forEach(bot => {
             if (this._bots.find(b => b.id === bot.id)) {
-                this._bots.find(b => b.id === bot.id).Coordinates.push(bot.Coordinates[bot.Coordinates.length - 1]);
-                this._geogson.features.find(b => b.properties.id === bot.id).geometry.coordinates = [bot.Coordinates[bot.Coordinates.length - 1].longitude, bot.Coordinates[bot.Coordinates.length - 1].latitude];
+                this._bots.find(b => b.id === bot.id).Coordinates.push(bot.Coordinates[0]);
+                this._geogson.features.find(b => b.properties.id === bot.id).geometry.coordinates = [bot.Coordinates[0].longitude, bot.Coordinates[0].latitude];
             } else {
                 this.add(bot);
             }
@@ -79,6 +100,10 @@ const Bots = (function () {
             }
         }
 
+        this.callDraw();
+    }
+
+    BotsS.prototype.callDraw = function () {
         const event = new CustomEvent('bots:updated', {detail: 'Bots updated'});
         document.dispatchEvent(event);
     }
@@ -113,7 +138,7 @@ const Wildfires = (function () {
             type: 'Feature',
             geometry: {
                 type: 'Polygon',
-                coordinates: this.buildCoordinates(wildfire.Coordinates),
+                coordinates: this.buildPolygonCoordinates(wildfire.Coordinates),
             },
             properties: {
                 title: 'Wildfire',
@@ -122,7 +147,6 @@ const Wildfires = (function () {
             },
         });
 
-        // Add wildfire to panel
         this.addToPanel(wildfire);
     }
 
@@ -130,6 +154,8 @@ const Wildfires = (function () {
         this.removeFromPanel(id);
         this._wildfires = this._wildfires.filter(wildfire => wildfire.id !== id);
         this._geogson.features = this._geogson.features.filter(wildfire => wildfire.properties.id !== id);
+
+        this.callDraw();
     }
 
     WildfiresS.prototype.addToPanel = function (wildfire) {
@@ -138,9 +164,12 @@ const Wildfires = (function () {
         clone.id = '';
         clone.dataset.id = wildfire.id;
         clone.querySelector('.panel-wildfire-id').textContent = wildfire.id;
-        clone.addEventListener('click', () => {
+        clone.addEventListener('click', (e) => {
+            openDetailModal(wildfire, e.clientX, e.clientY);
+        });
+        clone.querySelector('.fly-to').addEventListener('click', (e) => {
+            e.stopPropagation();
             Mapbox.getInstance().flyTo(wildfire.Coordinates[0].longitude, wildfire.Coordinates[0].latitude);
-            console.log(wildfire);
         });
         this._body.appendChild(clone);
     };
@@ -172,11 +201,10 @@ const Wildfires = (function () {
             }
         }
 
-        const event = new CustomEvent('wildfires:updated', {detail: 'Wildfires updated'});
-        document.dispatchEvent(event);
+        this.callDraw();
     }
 
-    WildfiresS.prototype.buildCoordinates = function (coordinates) {
+    WildfiresS.prototype.buildPolygonCoordinates = function (coordinates) {
         const referencePoint = coordinates[0];
 
         coordinates.sort((a, b) => {
@@ -190,6 +218,11 @@ const Wildfires = (function () {
 
         return [coordinates.map(c => [c.longitude, c.latitude])];
     };
+
+    WildfiresS.prototype.callDraw = function () {
+        const event = new CustomEvent('wildfires:updated', {detail: 'Wildfires updated'});
+        document.dispatchEvent(event);
+    }
 
     return {
         getInstance: function () {
@@ -216,7 +249,6 @@ const Mapbox = (function () {
 
     MapboxS.prototype._initMap = function () {
         mapboxgl.accessToken = mapboxToken;
-        console.log(mapboxToken);
         this._map = new mapboxgl.Map({
             container: 'map',
             style: 'mapbox://styles/mapbox/streets-v12',
@@ -298,6 +330,9 @@ const Mapbox = (function () {
         for (const bot of botsGeojson.features) {
             let botMarker = Bots.getInstance()._botsMarkers.find(marker => marker.id === bot.properties.id);
             if (botMarker) {
+                if (bot.id === 1) {
+                    console.log(bot.geometry.coordinates);
+                }
                 botMarker.marker.setLngLat(bot.geometry.coordinates);
             } else {
                 let el = document.createElement('div');
@@ -354,14 +389,23 @@ class Realtime {
         const bots = Bots.getInstance();
         const wildfires = Wildfires.getInstance();
 
+        document.getElementById('detail-modal-close').addEventListener('click', () => {
+            document.getElementById('detail-modal').style.display = 'none';
+        });
+
         this.socket.on('bots:update', (data) => {
-            console.log(`Bots - ${Date.now()}`, data);
+            // console.log(`Bots - ${Date.now()}`, data);
             bots.updateBots(data);
         });
 
         this.socket.on('fires:update', (data) => {
-            console.log(`Wildfires - ${Date.now()}`, data);
+            // console.log(`Wildfires - ${Date.now()}`, data);
             wildfires.updateWildfires(data);
+        });
+
+        this.socket.on('fire:end', (data) => {
+            console.log(`Fire end - ${Date.now()}`, data);
+            wildfires.remove(data.id);
         });
 
         this.socket.on('bot:unavailable', () => {
