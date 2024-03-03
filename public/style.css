@@ -110,8 +110,8 @@ main {
 
 #coordinates {
     position: absolute;
-    top: 10px;
-    left: 10px;
+    bottom: 10px;
+    right: 10px;
     background-color: white;
     border: 1px solid var(--grey);
     border-radius: 10px;
@@ -120,7 +120,16 @@ main {
 }
 
 .bot-marker {
-    background-image: url('images/markers/bot.png');
+    background-image: url('/images/markers/bot.png');
+    background-size: cover;
+    width: 30px;
+    height: 30px;
+    cursor: pointer;
+    transition: transform 0.5s !important;
+}
+
+.wildfire-marker {
+    background-image: url('/images/markers/wildfire.png');
     background-size: cover;
     width: 30px;
     height: 30px;

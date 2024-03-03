@@ -9,11 +9,6 @@ const app = express();
 const server = http.createServer(app);
 const port = process.env.PORT || 3000;
 
-const {BotRepository, FireStationRepository} = require('./repositories/repositories');
-const wrapper = require('./http/wrapper');
-
-const {emitNewWildFire} = require('./sockets/wildFireSocket');
-
 const FireGenerationService = require('./services/FireGenerationService');
 const BotService = require('./services/BotService');
 
@@ -30,23 +25,6 @@ app.use(cors({
 
 //routes
 app.use('/', router);
-
-app.get('/routes', (req, res) => {
-    //get all routes
-    const routes = [];
-    app._router.stack.forEach((middleware) => {
-        if (middleware.route) {
-            // middleware.route.path contient le chemin de la route
-            routes.push(middleware.route.path);
-        } else if (middleware.name === 'router') {
-            // Si c'est un routeur, parcourez ses routes également
-            middleware.handle.stack.forEach((handler) => {
-                routes.push(handler.route.path);
-            });
-        }
-    });
-    res.json(wrapper.success(routes));
-});
 
 socket.initSocket(server);
 

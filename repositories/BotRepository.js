@@ -46,6 +46,24 @@ class BotRepository extends BaseRepository {
         }
     }
 
+    async findAllAvailableWithCoordinatesLimit(coordinatesLimit = 10, req = {}) {
+        let availableBots = await this.findAllAvailable(req);
+
+        let rawQuery = "SELECT bc.botId, c.id, c.timestamp, c.latitude, c.longitude FROM botcoordinates AS bc INNER JOIN coordinates AS c ON bc.coordinatesId = c.id INNER JOIN (SELECT botId, coordinatesId FROM (SELECT botId, coordinatesId, ROW_NUMBER() OVER (PARTITION BY botId ORDER BY createdAt DESC) AS row_num FROM botcoordinates) AS ranked_coordinates WHERE row_num <= 10) AS latest_coordinates ON bc.botId = latest_coordinates.botId AND bc.coordinatesId = latest_coordinates.coordinatesId ORDER BY bc.botId, c.createdAt DESC;";
+
+        let coordinates = await this.getConnection().query(rawQuery, {type: Sequelize.QueryTypes.SELECT});
+
+        availableBots.results = availableBots.results.map(bot => {
+            bot.dataValues.Coordinates = coordinates.filter(coordinate => coordinate.botId === bot.id);
+            return bot;
+        });
+
+        return {
+            results: availableBots.results,
+            queries: availableBots.queries,
+        }
+    }
+
     async getLastGeoJson(botId) {
         let fleetQuery = `SELECT fleetId
                           FROM assignment

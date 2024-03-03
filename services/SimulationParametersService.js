@@ -6,7 +6,7 @@ class SimulationParametersService {
     constructor() {
         if (!SimulationParametersService.instance) {
             this.timeAcceleration = 1;
-            this.fireChance = 0.05;
+            this.fireChance = 0.01;
             this.possibleParameters = [
                 {parameter: 'timeAcceleration', type: 'number'},
                 {parameter: 'fireChance', type: 'number'}

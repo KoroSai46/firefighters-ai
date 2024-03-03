@@ -45,4 +45,23 @@ router.get('/test', async (req, res) => {
     res.json(wrapper.success(await BotRepository.findAllAvailable(req)));
 });
 
+router.get('/replays', async (req, res) => {
+
+    let endedWildFires = await WildFireRepository.findAllEndedWildFires(req);
+
+    res.render('replay/index.ejs', {
+        fires: endedWildFires.results,
+    });
+});
+
+
+router.get('/replays/:id', async (req, res) => {
+    let fire = await WildFireRepository.getEndedFireForReplay(req.params.id);
+
+    res.render('replay/show.ejs', {
+        params: fire,
+        mapboxAccessToken: process.env.MAPBOX_ACCESS_TOKEN,
+    });
+});
+
 module.exports = router;

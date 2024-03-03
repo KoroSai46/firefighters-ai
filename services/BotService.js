@@ -5,7 +5,7 @@ const {
     WildFireRepository
 } = require('../repositories/repositories');
 const MapService = require('./MapService');
-const {emitUpdateBots, emitUnavailableBot} = require("../sockets/botSocket");
+const {emitUpdateBots, emitUnavailableBot, emitBotAssignment} = require("../sockets/botSocket");
 const {BotFactory, CoordinatesFactory} = require("../factories/factories");
 const TimeManipulationService = require("./SimulationParametersService");
 const {emitFinishedWildFire} = require("../sockets/wildFireSocket");
@@ -13,11 +13,11 @@ const {emitFinishedWildFire} = require("../sockets/wildFireSocket");
 class BotService {
     constructor() {
         this._bots = [];
-        this._queries = [];
         this._botNavigationSteps = [];
-        this._assignments = [];
         this._updatedBots = [];
+        this._assignments = [];
         this.firstTimeLoading = true;
+        this.isReassigning = false;
         this.updateBots();
         this.reAssignBot();
     }
@@ -40,7 +40,6 @@ class BotService {
         } else if (this._updatedBots.length > 0) {
             emitUpdateBots(this._updatedBots);
         }
-
 
         setTimeout(() => {
             this.updateBots();
@@ -69,13 +68,9 @@ class BotService {
     }
 
     async createFleet(wildFire) {
-        wildFire = await WildFireRepository.findById(wildFire.id);
+        wildFire = await WildFireRepository.findActiveWildFireById(wildFire.id);
 
-        const wildFireStates = await wildFire.getWildFireStates();
-        const firestate = await wildFireStates[0];
-
-        const coordinates = await firestate.getCoordinates();
-        const closestBots = await this.findClosestBotsByCoordinates(coordinates[0]);
+        const closestBots = await this.findClosestBotsByCoordinates(wildFire.dataValues.Coordinates[0]);
 
         if (closestBots.length === 0) {
             return;
@@ -88,7 +83,7 @@ class BotService {
 
         for (let i = 0; i < closestBots.length; i++) {
             let botCoordinates = await closestBots[i].getCoordinates();
-            let navigation = await MapService.navigateToLocation(botCoordinates[0], coordinates[0]);
+            let navigation = await MapService.navigateToLocation(botCoordinates[0], wildFire.dataValues.Coordinates[0]);
             let duration = navigation.routes[0].duration;
 
             durations.push({bot: closestBots[i], duration, navigation});
@@ -103,7 +98,7 @@ class BotService {
             const navigation = botsToSend[i].navigation;
             const duration = botsToSend[i].duration;
             const returnGeojson = {...navigation};
-            returnGeojson.routes[0].legs.steps = returnGeojson.routes[0].legs[0].steps.reverse();
+            returnGeojson.routes[0].geometry.coordinates = returnGeojson.routes[0].geometry.coordinates.reverse();
             const assignment = await AssignmentRepository.create({
                 fleetId: fleet.id,
                 botId: bot.id,
@@ -112,13 +107,21 @@ class BotService {
                 geojson: navigation,
                 returnGeojson: returnGeojson
             });
-            console.log('Bot ' + bot.id + ' will arrive in ' + duration + ' seconds');
+
+            this._assignments.push(assignment);
+            emitBotAssignment({
+                botId: bot.id,
+                fireId: wildFire.id,
+                duration: duration
+            });
+
+            this.progressNavigation(bot);
         }
     }
 
 
     async findClosestBotsByCoordinates(toCoordinates, k = 5) {
-        let bots = await BotRepository.findAllAvailable();
+        let bots = await BotRepository.findAllAvailableWithCoordinatesLimit();
         if (bots.queries.total === 0) {
             emitUnavailableBot();
             return [];
@@ -158,86 +161,46 @@ class BotService {
     }
 
     async progressNavigation(bot) {
-        if (!this._updatedBots.some(updatedBot => updatedBot.id === bot.id)) {
-            let botTest = this._bots.find(botToTest => botToTest.id === bot.id);
-            this._updatedBots.push(botTest);
-        }
-        const botId = bot.id;
-        let navStep = this._botNavigationSteps.find(navStep => navStep?.botId === botId);
-        if (navStep === undefined) {
-            let geojson = await BotRepository.getLastGeoJson(botId);
-            if (geojson === null) {
-                console.log('no active assignment for bot ' + botId);
+        let assignment = this._assignments.find(assignment => assignment.botId === bot.id);
+
+        if (!assignment) {
+            assignment = await AssignmentRepository.findByBotId(bot.id);
+            if (!assignment) {
                 return;
             }
-            let steps = geojson.geojson.routes[0].legs[0].steps;
-            let step = 0;
-            let subStep = 0;
 
+            this._assignments.push(assignment);
 
-            //check if the bot already started the navigation
-            if (bot.dataValues.Coordinates.length === 0) {
-                let lastCoordinate = bot.dataValues.Coordinates[0];
-
-                //find in geojson the closest point to the last coordinate
-                let minDistance = 1000000;
-                let closestStep = 0;
-                let closestSubStep = 0;
-                for (let i = 0; i < steps.length; i++) {
-                    let coordinates = steps[i].geometry.coordinates;
-                    for (let j = 0; j < coordinates.length; j++) {
-                        let distance = this.haversineDistance(lastCoordinate, {
-                            latitude: coordinates[j][1],
-                            longitude: coordinates[j][0]
-                        });
-                        if (distance < minDistance) {
-                            minDistance = distance;
-                            closestStep = i;
-                            closestSubStep = j;
-                        }
-                    }
-                }
-            }
-
-            this._botNavigationSteps.push({
-                step,
-                subStep,
-                duration: geojson.geojson.routes[0].duration,
-                steps,
-                botId
-            });
-            navStep = this._botNavigationSteps.find(navStep => navStep?.botId === botId);
         }
 
-        //check if the bot has arrived
-        if (navStep.step === navStep.steps.length - 1) {
-            console.log("FIRE FINISHED");
-            let botId = navStep.botId;
-            let index = this._botNavigationSteps.findIndex(navStep => navStep.botId === botId);
-            this._botNavigationSteps.splice(index, 1);
+        let navStep = this._botNavigationSteps.find(navStep => navStep.botId === bot.id);
 
-            await this.finishFire(botId);
+        if (!navStep) {
+            navStep = {botId: bot.id, assignmentIndex: this._assignments.indexOf(assignment), step: 0, steps: assignment.geojson.routes[0].geometry.coordinates};
+            this._botNavigationSteps.push(navStep);
+        }
+
+        if (navStep.step === navStep.steps.length - 1) {
+            //remove assignment
+            this._assignments = this._assignments.filter(assignment => assignment.botId !== bot.id);
+            this._botNavigationSteps = this._botNavigationSteps.filter(navStep => navStep.botId !== bot.id);
+            await this.finishFire(bot.id);
             return;
         }
-        let newCoordinates = navStep.steps[navStep.step].geometry.coordinates;
 
-        //check if substep is defined
-        if (newCoordinates.length <= navStep.subStep) {
-            navStep.step++;
-            navStep.subStep = 0;
-            newCoordinates = navStep.steps[navStep.step].geometry.coordinates;
-        }
-
-        let realNewCoordinates = newCoordinates[navStep.subStep];
-        let newCoordinatesObject = await CoordinatesFactory.create({
-            latitude: realNewCoordinates[1],
-            longitude: realNewCoordinates[0],
+        let coordinates = navStep.steps[navStep.step];
+        let coordinatesObject = await CoordinatesFactory.create({
+            latitude: coordinates[1],
+            longitude: coordinates[0],
             timestamp: new Date()
         });
-        await bot.addCoordinate(newCoordinatesObject);
-        navStep.subStep++;
+        await bot.addCoordinates(coordinatesObject);
 
-        let baseTime = navStep.steps[navStep.step].duration / navStep.steps[navStep.step].geometry.coordinates.length;
+        navStep.step++;
+
+        this._updatedBots.push(this._bots.find(bot => bot.id === navStep.botId));
+
+        let baseTime = assignment.geojson.routes[0].duration / navStep.steps.length;
 
         let acceleredTime = baseTime / TimeManipulationService.getTimeAcceleration();
 
@@ -249,30 +212,33 @@ class BotService {
     async finishFire(botId) {
         const fireId = await AssignmentRepository.findFireByBotId(botId);
 
-        console.log('Fire finished: ' + fireId);
-
         await WildFireRepository.finishWildFire(fireId);
 
         emitFinishedWildFire(fireId);
-
-        await this.reAssignBot();
     }
 
     async reAssignBot() {
-        let availableBots = await BotRepository.findAllAvailable();
-
-        if (availableBots.results.length === 0) {
+        if (this.isReassigning) {
             return;
+        } else {
+            this.isReassigning = true;
         }
-        for (let i = 0; i < availableBots.results.length; i++) {
-            let activeFire = await WildFireRepository.findSingleActiveWildFire();
+        let availableBots = await BotRepository.findAllAvailableWithCoordinatesLimit();
 
-            if (activeFire.length === 0) {
-                return;
+        if (availableBots.results.length > 0) {
+            for (let i = 0; i < availableBots.results.length; i++) {
+                let activeFire = await WildFireRepository.findSingleActiveWildFire();
+
+                if (activeFire.length > 0) {
+                    await this.createFleet(activeFire[0]);
+                }
             }
-
-            await this.createFleet(activeFire[0]);
         }
+        this.isReassigning = false;
+
+        setTimeout(() => {
+            this.reAssignBot();
+        }, 1000);
     }
 
 }

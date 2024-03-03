@@ -6,7 +6,8 @@
     <title>Firefighters-ai</title>
 
     <!-- Custom -->
-    <link rel="stylesheet" type="text/css" href="style.css">
+    <link rel="stylesheet" type="text/css" href="/style.css">
+
 
     <!-- Mapbox -->
     <link href='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.css' rel='stylesheet'/>
@@ -15,14 +16,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
           integrity="sha512-DTOQO9RWCH3ppGqcWaEA1BIZOC6xxalwEsw9c2QQeAIftl+Vegovlnee1c9QX4TctnWMn13TZye+giMm8e2LwA=="
           crossorigin="anonymous" referrerpolicy="no-referrer"/>
-
     <!-- JSON Formatter -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.min.css">
 
-    <!-- Toastify -->
-    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
 
-    <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
 </head>
 <body>
@@ -48,6 +45,8 @@
             </div>
         </div>
     </nav>
+
+
     <!--    Map-->
     <div id="map">
     </div>
@@ -60,10 +59,10 @@
             <i class="fas fa-up-down-left-right drag"></i>
         </div>
         <div id="template-panel-bot" class="panel-bot hidden" data-id="">
-            <img src="images/markers/bot.png" alt="bot" class="panel-marker">
+            <img src="/images/markers/bot.png" alt="bot" class="panel-marker">
             <div class="panel-bot-id text-sm"></div>
             <div class="panel-actions">
-                <img src="images/markers/mappoint.svg" alt="go" class="panel-action fly-to">
+                <img src="/images/markers/mappoint.svg" alt="go" class="panel-action fly-to">
             </div>
         </div>
         <div class="panel-body">
@@ -72,18 +71,12 @@
     <!--    Wildfires panel-->
     <div id="wildfires-panel" class="panel">
         <div class="panel-header">
-            <div>Wildfires</div>
+            <div>Wildfire</div>
             <i class="fas fa-up-down-left-right drag"></i>
         </div>
-        <div id="template-panel-wildfire" class="panel-wildfire hidden" data-id="">
-            <img src="images/markers/wildfire.png" alt="bot" class="panel-marker">
-            <div class="panel-wildfire-id text-sm"></div>
-            <div class="panel-actions">
-                <img src="images/markers/mappoint.svg" alt="go" class="panel-action fly-to">
-            </div>
-        </div>
         <div class="panel-body">
-            <a href="/replays">See old fires</a>
+            <div class="json-container">
+            </div>
         </div>
     </div>
     <!--    Parameters panel-->
@@ -97,32 +90,38 @@
                 <label for="timeAcceleration">Time acceleration</label>
                 <input class="input" type="text" value="1" id="timeAcceleration" data-property="timeAcceleration">
             </div>
-            <div class="input-row">
-                <label for="fireChance">Fire Chances</label>
-                <input class="input" type="text" value="0.05" id="fireChance" data-property="fireChance">
+
+            <div class="input-row mb-1">
+                <label for="isPaused">Pause the simulation</label>
+                <input class="input" type="checkbox" id="isPaused" data-property="isPaused">
+            </div>
+
+            <div class="input-row mb-1">
+                <label for="reload">Reload the simulation</label>
+                <button class="btn btn-primary" id="reload">
+                    <i class="fa-solid fa-rotate-right mr-2"></i> Reload
+                </button>
             </div>
         </div>
     </div>
-    <!--    Detail modal-->
-    <div id="detail-modal" class="modal">
-        <div class="panel-header">
-            <div>Details</div>
-            <i id="detail-modal-close" class="fas fa-times modal-close"></i>
-        </div>
-        <div id="slot"></div>
-    </div>
 </main>
-<script defer>
-    const socket = io('<%= backendUrl %>');
+<script>
     const mapboxToken = '<%= mapboxAccessToken %>';
+    const data = <%- JSON.stringify(params) %>;
+
     const defaultParameters = {
-        timeAcceleration: <%= parameters.timeAcceleration %>,
-        fireChance: <%= parameters.fireChance %>,
+        timeAcceleration: 1,
     };
 </script>
+
+<script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.umd.min.js"></script>
+<script defer>
+    const formatter = new JSONFormatter(data);
+    document.querySelector('.json-container').appendChild(formatter.render());
+</script>
+
 <script type="text/javascript" src="/firefighter-ai.js" defer></script>
-<script type="text/javascript" src="/mapbox.js" defer></script>
-<script src="https://cdn.jsdelivr.net/npm/json-formatter-js@2.3.4/dist/json-formatter.umd.min.js" defer></script>
+<script type="text/javascript" src="/mapbox_replay.js" defer></script>
 <script type="text/javascript" src="/toastify.min.js" defer></script>
 <script src='https://api.mapbox.com/mapbox-gl-js/v3.0.1/mapbox-gl.js'></script>
 </body>

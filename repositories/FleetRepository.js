@@ -5,6 +5,14 @@ class FleetRepository extends BaseRepository {
     constructor() {
         super(Fleet);
     }
+
+    async findByWildFireId(wildFireId) {
+        return this.model.findOne({
+            where: {
+                wildfireId: wildFireId
+            }
+        });
+    }
 }
 
 const fleetRepositoryInstance = new FleetRepository();

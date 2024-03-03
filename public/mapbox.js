@@ -330,9 +330,6 @@ const Mapbox = (function () {
         for (const bot of botsGeojson.features) {
             let botMarker = Bots.getInstance()._botsMarkers.find(marker => marker.id === bot.properties.id);
             if (botMarker) {
-                if (bot.id === 1) {
-                    console.log(bot.geometry.coordinates);
-                }
                 botMarker.marker.setLngLat(bot.geometry.coordinates);
             } else {
                 let el = document.createElement('div');
@@ -404,12 +401,15 @@ class Realtime {
         });
 
         this.socket.on('fire:end', (data) => {
-            console.log(`Fire end - ${Date.now()}`, data);
             wildfires.remove(data);
         });
 
         this.socket.on('bot:unavailable', () => {
             ToastManager.error('No available bots, create some bots !');
+        });
+
+        this.socket.on('bot:assignment', (data) => {
+            ToastManager.info(`Bot ${data.botId} assigned to wildfire ${data.fireId}, will arrive in ${data.duration} seconds`);
         });
 
         this._mapbox.onMapReady((mapbox) => {

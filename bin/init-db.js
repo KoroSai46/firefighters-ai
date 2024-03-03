@@ -26,8 +26,6 @@ async function initDB() {
         password: process.env.DB_PASSWORD,
     };
 
-    console.log('connectionConfig', connectionConfig);
-
 
     async function initDatabase() {
         const connection = await mysql.createConnection(connectionConfig);
@@ -57,6 +55,8 @@ async function initDB() {
                         await secondStep(connection, process);
                     }
                 });
+            } else {
+                await secondStep(connection, process);
             }
 
 

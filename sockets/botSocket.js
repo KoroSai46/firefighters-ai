@@ -11,8 +11,14 @@ function emitUnavailableBot() {
     io.emit(Events.BOT_UNAVAILABLE);
 }
 
+function emitBotAssignment(data) {
+    const io = socket.getIO();
+    io.emit(Events.BOT_ASSIGNMENT, data);
+}
+
 
 module.exports = {
     emitUpdateBots,
-    emitUnavailableBot
+    emitUnavailableBot,
+    emitBotAssignment
 }

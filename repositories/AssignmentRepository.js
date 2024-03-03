@@ -29,6 +29,15 @@ class AssignmentRepository extends BaseRepository {
         return result[0].wildFireId;
     }
 
+    async findByFleetId(fleetId) {
+        return await Assignment.findAll({
+            where: {
+                fleetId: fleetId
+            }
+        });
+
+    }
+
 }
 
 const assignmentRepositoryInstance = new AssignmentRepository();

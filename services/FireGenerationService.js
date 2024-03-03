@@ -8,26 +8,31 @@ const SimulationParametersService = require('./SimulationParametersService');
 
 
 class FireGenerationService {
-    constructor(process) {
-        this.start();
+    constructor() {
+        this.init().then(() => {
+        });
+    }
+
+    async init() {
 
         this._fires = [];
         this._updatedFires = [];
         this.firstTimeLoading = true;
         this._queries = [];
         this.refreshFires().then(() => {
-            this.updateFires().then(r => {
+            this.updateFires().then(async () => {
+                await this.start();
             });
         });
     }
 
-    start() {
-        this.tryToGenerateFire();
+    async start() {
+        await this.tryToGenerateFire();
     }
 
-    tryToGenerateFire() {
+    async tryToGenerateFire() {
         if (Math.random() < SimulationParametersService.getFireChance()) {
-            this.generateFire();
+            await this.generateFire();
         }
 
         // try again in between 1 and 5 seconds
@@ -37,7 +42,7 @@ class FireGenerationService {
     }
 
     async generateFire() {
-        const fire = await WildFireFactory.create({'startedAt': new Date()});
+        let fire = await WildFireFactory.create({'startedAt': new Date()});
 
 
         // emitNewWildFire(fire);
@@ -74,39 +79,9 @@ class FireGenerationService {
             await fireState.addCoordinates(coordinatesInstance);
         }
 
+        fire = await WildFireRepository.findActiveWildFireById(fire.id);
+
         this._updatedFires.push(fire);
-
-
-        await BotService.createFleet(fire);
-    }
-
-
-    async updateFire(fire) {
-        fire.getChunks().forEach(chunk => {
-
-        })
-    }
-
-    updateChunk(chunk) {
-        if (Math.random() > 0.2) return chunk;
-
-        if (Math.random() > 0.5) {
-            this.extendChunk(chunk);
-        } else {
-
-        }
-    }
-
-    extendChunk(chunk) {
-
-    }
-
-    /**
-     * @returns {*}
-     */
-    upgradeChunkStrength(chunk) {
-        chunk.strength += 1;
-        return chunk;
     }
 
     async refreshFires() {
